@@ -636,7 +636,7 @@ def selecao_modulos(destino, nave_id):
                            codigo_sala=request.args.get('codigo_sala'))
     
 # NOVA ROTA: Simula a viagem em turnos
-@app.route('/viagem/<string:destino>/<string:nave_id>', methods=['POST'])
+@app.route('/viagem/<string:destino>/<string:nave_id>', methods=['POST', 'GET'])
 def viagem(destino, nave_id):
     """
     Processa a lista de módulos selecionados e simula a viagem.
@@ -649,7 +649,7 @@ def viagem(destino, nave_id):
     
     # Busca os dados da nave
     nave = NAVES_ESPACIAIS.get(nave_id)
-
+    
     # LÓGICA DE TURNOS ATUALIZADA
     if destino == 'marte':
         total_turnos = 60
