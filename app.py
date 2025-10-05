@@ -4,6 +4,7 @@ import random
 import json
 import sqlite3
 import os
+import math
 from datetime import datetime, timedelta
 import secrets
 import threading
@@ -101,6 +102,122 @@ class DatabaseManager:
                     conn.commit()
             except Exception:
                 pass
+
+    # --- Novos métodos para gerenciar 'desafios' dentro da tabela salas_virtuais ---
+    def _fetch_sala_row(self, codigo_sala, include_inactive=False):
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            if include_inactive:
+                cursor.execute('SELECT * FROM salas_virtuais WHERE UPPER(codigo_sala) = UPPER(?)', (codigo_sala,))
+            else:
+                cursor.execute('SELECT * FROM salas_virtuais WHERE UPPER(codigo_sala) = UPPER(?) AND ativa = 1', (codigo_sala,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def listar_salas_por_atividade(self, ativa=True):
+        """Retorna lista de salas (com desafios desserializados) filtrando por atividade."""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM salas_virtuais WHERE ativa = ? ORDER BY data_criacao DESC', (1 if ativa else 0,))
+            rows = cursor.fetchall()
+            result = []
+            for r in rows:
+                sala = dict(r)
+                # desserializar desafios_json
+                desafios = []
+                try:
+                    desafios = json.loads(sala.get('desafios_json') or '[]')
+                except Exception:
+                    desafios = []
+                sala_view = {
+                    'codigo': sala.get('codigo_sala'),
+                    'nome_sala': sala.get('nome_sala'),
+                    'destino': sala.get('destino'),
+                    'nave_id': sala.get('nave_id'),
+                    'desafios': desafios,
+                    'desafio_selecionado_index': sala.get('desafio_selecionado_index'),
+                    'ativa': bool(sala.get('ativa')),
+                    'data_criacao': sala.get('data_criacao')
+                }
+                # contar alunos
+                cursor.execute('SELECT COUNT(*) FROM alunos WHERE sala_id = ?', (sala.get('id'),))
+                sala_view['aluno_count'] = cursor.fetchone()[0]
+                result.append(sala_view)
+            return result
+
+    def criar_desafio_para_sala(self, codigo_sala, titulo, descricao):
+        """Adiciona um desafio JSON à sala identificada por codigo_sala."""
+        sala = self._fetch_sala_row(codigo_sala, include_inactive=True)
+        if not sala:
+            raise ValueError('Sala não encontrada')
+        desafios = []
+        try:
+            desafios = json.loads(sala.get('desafios_json') or '[]')
+        except Exception:
+            desafios = []
+        desafios.append({'titulo': titulo, 'descricao': descricao})
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('UPDATE salas_virtuais SET desafios_json = ? WHERE id = ?', (json.dumps(desafios, ensure_ascii=False), sala['id']))
+            conn.commit()
+
+    def editar_desafio(self, codigo_sala, idx, titulo, descricao):
+        sala = self._fetch_sala_row(codigo_sala, include_inactive=True)
+        if not sala:
+            raise ValueError('Sala não encontrada')
+        desafios = []
+        try:
+            desafios = json.loads(sala.get('desafios_json') or '[]')
+        except Exception:
+            desafios = []
+        if 0 <= idx < len(desafios):
+            desafios[idx] = {'titulo': titulo, 'descricao': descricao}
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('UPDATE salas_virtuais SET desafios_json = ? WHERE id = ?', (json.dumps(desafios, ensure_ascii=False), sala['id']))
+                conn.commit()
+
+    def excluir_desafio(self, codigo_sala, idx):
+        sala = self._fetch_sala_row(codigo_sala, include_inactive=True)
+        if not sala:
+            raise ValueError('Sala não encontrada')
+        desafios = []
+        try:
+            desafios = json.loads(sala.get('desafios_json') or '[]')
+        except Exception:
+            desafios = []
+        if 0 <= idx < len(desafios):
+            desafios.pop(idx)
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('UPDATE salas_virtuais SET desafios_json = ? WHERE id = ?', (json.dumps(desafios, ensure_ascii=False), sala['id']))
+                conn.commit()
+
+    def selecionar_desafio(self, codigo_sala, idx):
+        sala = self._fetch_sala_row(codigo_sala, include_inactive=True)
+        if not sala:
+            raise ValueError('Sala não encontrada')
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('UPDATE salas_virtuais SET desafio_selecionado_index = ? WHERE id = ?', (int(idx), sala['id']))
+            conn.commit()
+
+    def fechar_sala(self, codigo_sala):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('UPDATE salas_virtuais SET ativa = 0 WHERE UPPER(codigo_sala)=UPPER(?)', (codigo_sala,))
+            conn.commit()
+
+    def reabrir_sala_unica(self, codigo_sala):
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            # Desativar todas
+            cursor.execute('UPDATE salas_virtuais SET ativa = 0')
+            # Ativar a solicitada
+            cursor.execute('UPDATE salas_virtuais SET ativa = 1 WHERE UPPER(codigo_sala)=UPPER(?)', (codigo_sala,))
+            conn.commit()
     
     def gerar_codigo_sala(self):
         """Gera um código único para a sala"""
@@ -210,120 +327,6 @@ class DatabaseManager:
 # Instância global do gerenciador de banco de dados
 db_manager = DatabaseManager()
 
-
-class JSONStore:
-    """Armazenamento interno em JSON para dados essenciais do sistema."""
-    def __init__(self, path='data.json'):
-        self.path = path
-        self._lock = threading.Lock()
-        self._default = {
-            'professores': [{'id': 1, 'nome': 'Professor'}],
-            'salas': [],
-            'progresso': {}
-        }
-        if not os.path.exists(self.path):
-            self._save(self._default)
-
-    def _load(self):
-        try:
-            with open(self.path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception:
-            return json.loads(json.dumps(self._default))
-
-    def _save(self, data):
-        with self._lock:
-            with open(self.path, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
-
-    # Salas
-    def listar_salas(self):
-        data = self._load()
-        return data.get('salas', [])
-
-    def listar_salas_por_atividade(self, ativa=True):
-        return [s for s in self.listar_salas() if bool(s.get('ativa', True)) == bool(ativa)]
-
-    def buscar_sala(self, codigo):
-        c = (codigo or '').upper()
-        for s in self.listar_salas():
-            if (s.get('codigo') or '').upper() == c:
-                return s
-        return None
-
-    def criar_sala(self, nome_sala, destino, nave_id, alunos=None):
-        data = self._load()
-        from random import choices
-        import string
-        codigo = ''.join(choices(string.ascii_uppercase + string.digits, k=8))
-        nova = {
-            'codigo': codigo,
-            'nome_sala': nome_sala,
-            'destino': destino,
-            'nave_id': nave_id,
-            'alunos': [{'nome': a} for a in (alunos or [])],
-            'desafios': [],
-            'desafio_selecionado_index': None,
-            'ativa': True,
-            'data_criacao': datetime.now().isoformat()[:19]
-        }
-        data['salas'].append(nova)
-        self._save(data)
-        return codigo
-
-    def fechar_sala(self, codigo):
-        data = self._load()
-        for s in data.get('salas', []):
-            if s.get('codigo') == codigo:
-                s['ativa'] = False
-        self._save(data)
-
-    def reabrir_sala_unica(self, codigo):
-        data = self._load()
-        for s in data.get('salas', []):
-            s['ativa'] = (s.get('codigo') == codigo)
-        self._save(data)
-
-    # Desafios
-    def criar_desafio_para_sala(self, codigo, titulo, descricao):
-        data = self._load()
-        for s in data.get('salas', []):
-            if s.get('codigo') == codigo:
-                s.setdefault('desafios', []).append({'titulo': titulo, 'descricao': descricao})
-                break
-        self._save(data)
-
-    def editar_desafio(self, codigo, idx, titulo, descricao):
-        data = self._load()
-        for s in data.get('salas', []):
-            if s.get('codigo') == codigo:
-                ds = s.setdefault('desafios', [])
-                if 0 <= idx < len(ds):
-                    ds[idx] = {'titulo': titulo, 'descricao': descricao}
-                break
-        self._save(data)
-
-    def excluir_desafio(self, codigo, idx):
-        data = self._load()
-        for s in data.get('salas', []):
-            if s.get('codigo') == codigo:
-                ds = s.setdefault('desafios', [])
-                if 0 <= idx < len(ds):
-                    ds.pop(idx)
-                break
-        self._save(data)
-
-    def selecionar_desafio(self, codigo, idx):
-        data = self._load()
-        for s in data.get('salas', []):
-            if s.get('codigo') == codigo:
-                ds = s.setdefault('desafios', [])
-                if 0 <= idx < len(ds):
-                    s['desafio_selecionado_index'] = idx
-                break
-        self._save(data)
-
-json_store = JSONStore()
 
 
 # --- DEFINIÇÃO DAS ROTAS ---
@@ -677,7 +680,7 @@ def viagem(destino, nave_id):
         try:
             titulo = f"Missão {destino.capitalize()} — {nave['nome'] if nave else nave_id}"
             descricao = f"Missão planejada com {len(modulos_a_bordo)} módulos selecionados."
-            json_store.criar_desafio_para_sala(codigo_sala, titulo, descricao)
+            db_manager.criar_desafio_para_sala(codigo_sala, titulo, descricao)
         except Exception:
             pass
         return redirect(url_for('professor_dashboard'))
@@ -698,24 +701,24 @@ def professor_dashboard():
     ranking = []
     salas = []
     salas_inativas = []
-    for s in json_store.listar_salas_por_atividade(True):
+    for s in db_manager.listar_salas_por_atividade(True):
         salas.append({
             'codigo': s.get('codigo'),
             'nome_sala': s.get('nome_sala'),
             'destino': s.get('destino'),
             'nave_id': s.get('nave_id'),
-            'aluno_count': len(s.get('alunos', [])),
+            'aluno_count': s.get('aluno_count', 0),
             'data_criacao': s.get('data_criacao'),
             'desafios': s.get('desafios', []),
             'desafio_selecionado_index': s.get('desafio_selecionado_index')
         })
-    for s in json_store.listar_salas_por_atividade(False):
+    for s in db_manager.listar_salas_por_atividade(False):
         salas_inativas.append({
             'codigo': s.get('codigo'),
             'nome_sala': s.get('nome_sala'),
             'destino': s.get('destino'),
             'nave_id': s.get('nave_id'),
-            'aluno_count': len(s.get('alunos', [])),
+            'aluno_count': s.get('aluno_count', 0),
             'data_criacao': s.get('data_criacao')
         })
     return render_template('professor_dashboard.html', ranking=ranking, salas=salas, salas_inativas=salas_inativas)
@@ -730,7 +733,7 @@ def professor_criar_desafio():
 def professor_criar_desafio_para_sala(codigo_sala):
     """Cria um desafio placeholder no JSONStore e retorna ao dashboard."""
     try:
-        json_store.criar_desafio_para_sala(codigo_sala, 'Novo desafio', 'Desafio criado a partir do dashboard.')
+        db_manager.criar_desafio_para_sala(codigo_sala, 'Novo desafio', 'Desafio criado a partir do dashboard.')
     except Exception:
         pass
     return redirect(url_for('professor_dashboard'))
@@ -742,7 +745,7 @@ def professor_sala_fechar():
     if not codigo_sala:
         return redirect(url_for('professor_dashboard'))
     try:
-        json_store.fechar_sala(codigo_sala)
+        db_manager.fechar_sala(codigo_sala)
     except Exception:
         pass
     return redirect(url_for('professor_dashboard'))
@@ -754,7 +757,7 @@ def professor_sala_reabrir():
     if not codigo_sala:
         return redirect(url_for('professor_dashboard'))
     try:
-        json_store.reabrir_sala_unica(codigo_sala)
+        db_manager.reabrir_sala_unica(codigo_sala)
     except Exception:
         pass
     return redirect(url_for('professor_dashboard'))
@@ -774,7 +777,7 @@ def professor_editar_desafio():
         return redirect(url_for('professor_dashboard'))
 
     try:
-        json_store.editar_desafio(codigo_sala, idx, titulo or f'Desafio {idx+1}', descricao or '')
+        db_manager.editar_desafio(codigo_sala, idx, titulo or f'Desafio {idx+1}', descricao or '')
     except Exception:
         pass
     return redirect(url_for('professor_dashboard'))
@@ -793,7 +796,7 @@ def professor_excluir_desafio():
         return redirect(url_for('professor_dashboard'))
 
     try:
-        json_store.excluir_desafio(codigo_sala, idx)
+        db_manager.excluir_desafio(codigo_sala, idx)
     except Exception:
         pass
 
@@ -813,7 +816,7 @@ def professor_selecionar_desafio():
         return redirect(url_for('professor_dashboard'))
 
     try:
-        json_store.selecionar_desafio(codigo_sala, idx)
+        db_manager.selecionar_desafio(codigo_sala, idx)
     except Exception:
         pass
 
@@ -883,10 +886,18 @@ def professor_excluir_aluno_ranking():
 @app.route('/professor/sala/<codigo_sala>')
 def professor_sala_detalhes(codigo_sala):
     """Detalhes da sala e links de acesso dos alunos via JSONStore."""
-    s = json_store.buscar_sala(codigo_sala)
-    if not s:
+    # Buscar sala no SQLite e desserializar desafios e alunos
+    sala_row = db_manager.buscar_sala_por_codigo_any(codigo_sala)
+    if not sala_row:
         return "Sala não encontrada", 404
-    alunos = s.get('alunos', [])
+    # Desserializar desafios
+    desafios = []
+    try:
+        desafios = json.loads(sala_row.get('desafios_json') or '[]')
+    except Exception:
+        desafios = []
+    # Buscar alunos associados
+    alunos = db_manager.buscar_alunos_por_sala(sala_row.get('id'))
     # Gerar link de acesso por aluno
     for aluno in alunos:
         base = url_for('aluno_login', codigo_sala=codigo_sala, _external=True)
@@ -895,15 +906,16 @@ def professor_sala_detalhes(codigo_sala):
             aluno['acesso_url'] = f"{base}?" + urlencode({'nome': aluno.get('nome', '')})
         except Exception:
             aluno['acesso_url'] = base
+
     sala_view = {
-        'codigo_sala': s.get('codigo'),
-        'nome_sala': s.get('nome_sala'),
-        'destino': s.get('destino'),
-        'nave_id': s.get('nave_id'),
-        'data_criacao': s.get('data_criacao'),
-        'ativa': s.get('ativa'),
+        'codigo_sala': sala_row.get('codigo_sala'),
+        'nome_sala': sala_row.get('nome_sala'),
+        'destino': sala_row.get('destino'),
+        'nave_id': sala_row.get('nave_id'),
+        'data_criacao': sala_row.get('data_criacao'),
+        'ativa': bool(sala_row.get('ativa')),
         'alunos': alunos,
-        'desafios': s.get('desafios', [])
+        'desafios': desafios
     }
     return render_template('professor_sala_detalhes.html', sala=sala_view, alunos=alunos)
 
