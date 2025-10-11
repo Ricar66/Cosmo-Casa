@@ -7,12 +7,12 @@
 </head>
 <body class="conteudo-centralizado">
     <header class="brand-header">
-        <img class="brand-logo" src="{{ url_for('static', filename='imagens/Group 3.png') }}" alt="Cosmo Casa logo" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='{{ url_for('static', filename='imagens/Group 3.png') }}'">
+        <img class="brand-logo" src="{{ url_for('static', filename='imagens/Group 3.png') }}" alt="Cosmo Casa logo" loading="lazy" decoding="async">
     </header>
     <div class="container-grande">
         <div class="mb-10">
-            {% if session.get('missao_destino') and session.get('missao_nave') %}
-                <a href="{{ url_for('missao.selecao_modulos', destino=session.get('missao_destino'), nave_id=session.get('missao_nave')) }}" class="botao">Voltar</a>
+            {% if session.get('missao_destino') and session.get('viagem_nave_id') %}
+                <a href="{{ url_for('missao.selecao_modulos', destino=session.get('missao_destino'), nave_id=session.get('viagem_nave_id')) }}" class="botao">Voltar</a>
             {% else %}
                 <a href="{{ url_for('tela_selecao') }}" class="botao">Voltar</a>
             {% endif %}
@@ -23,47 +23,107 @@
             <span>Nave: <strong>{{ nave.nome }}</strong></span>
         </div>
 
-        <div class="diario-container">
-            {% for entrada in diario %}
-            <div class="diario-entrada">
-                <span class="turno">Turno {{ entrada.turno }}</span>
-                <div class="evento">
-                    {% if entrada.evento.icone %}
-                        <img class="evento-icone" src="{{ url_for('missao.icons', filename=entrada.evento.icone) }}" alt="Ícone do evento" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='{{ url_for('static', filename='imagens/Group 3.png') }}'">
-                    {% endif %}
-                    <h4>{{ entrada.evento.nome }}</h4>
-                    <p>{{ entrada.evento.descricao }}</p>
-                </div>
+        <div class="diario-container" id="diario-container-realtime">
             </div>
-            {% endfor %}
+
+        <div id="resultado-final-container" style="display: none;">
+            <div class="sumario-chegada">
+                <h3>Condição da Carga na Chegada</h3>
+                <ul>
+                {% for id, modulo in modulos.items() %}
+                    <li>
+                        {{ modulo.nome }} - 
+                        {% if modulo.status == 'Avariado' %}
+                            <strong class="status-avariado">AVARIADO</strong>
+                        {% else %}
+                            <strong class="status-ok">OPERACIONAL</strong>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+                </ul>
+            </div>
+            
+            <div class="resultado-viagem mt-16">
+                {% if chegada_ok %}
+                    <p><strong>Sucesso:</strong> Você alcançou o destino com a carga essencial. Pontuação: <strong>{{ pontuacao }}</strong></p>
+                    <a href="{{ url_for('missao.habitat') }}" class="botao">Montar Habitat</a>
+                {% else %}
+                    <p><strong>Game Over:</strong> A missão não chegou ao destino com condições suficientes. Pontuação: <strong>{{ pontuacao }}</strong></p>
+                    <a href="{{ url_for('missao.game_over') }}" class="botao alerta">Ver Detalhes do Game Over</a>
+                {% endif %}
+            </div>
         </div>
 
-        <div class="sumario-chegada">
-            <h3>Condição da Carga na Chegada</h3>
-            <ul>
-            {% for id, modulo in modulos.items() %}
-                <li>
-                    {{ modulo.nome }} - 
-                    {% if modulo.status == 'Avariado' %}
-                        <strong class="status-avariado">AVARIADO</strong>
-                    {% else %}
-                        <strong class="status-ok">OPERACIONAL</strong>
-                    {% endif %}
-                </li>
-            {% endfor %}
-            </ul>
-        </div>
-        {% if chegada_ok is defined %}
-        <div class="resultado-viagem mt-16">
-            {% if chegada_ok %}
-                <p><strong>Sucesso:</strong> Você alcançou o destino com a carga essencial. Pontuação: <strong>{{ pontuacao }}</strong></p>
-                <a href="{{ url_for('missao.habitat') }}" class="botao">Montar Habitat</a>
-            {% else %}
-                <p><strong>Game Over:</strong> A missão não chegou ao destino com condições suficientes. Pontuação: <strong>{{ pontuacao }}</strong></p>
-                <a href="{{ url_for('missao.game_over') }}" class="botao alerta">Ver Detalhes do Game Over</a>
-            {% endif %}
-        </div>
-        {% endif %}
-  </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const diarioContainer = document.getElementById("diario-container-realtime");
+            const resultadoContainer = document.getElementById("resultado-final-container");
+            
+            // Tenta se conectar ao servidor WebSocket
+            try {
+                const ws = new WebSocket("ws://localhost:8765");
+
+                // O que fazer quando a conexão é aberta com sucesso
+                ws.onopen = function() {
+                    console.log("Conexão WebSocket estabelecida. Iniciando simulação...");
+                    const tripData = {
+                        action: "start_trip",
+                        // Passa os dados do diário que o Flask/Jinja preparou como JSON
+                        diario: {{ diario | tojson | safe }}
+                    };
+                    ws.send(JSON.stringify(tripData));
+                };
+
+                // O que fazer quando uma mensagem chega do servidor
+                ws.onmessage = function(event) {
+                    const message = JSON.parse(event.data);
+
+                    // Se for um evento de turno da viagem
+                    if (message.type === "trip_event") {
+                        const eventData = message.data;
+                        const eventElement = document.createElement("div");
+                        eventElement.className = "diario-entrada"; // Usando a mesma classe do seu CSS
+
+                        let iconHtml = '';
+                        if (eventData.evento.icone) {
+                            // Constrói a URL para o ícone (ex: /icons/solar-storm.svg)
+                            const iconUrl = `{{ url_for('missao.icons', filename='') }}${eventData.evento.icone}`;
+                            iconHtml = `<img class="evento-icone" src="${iconUrl}" alt="Ícone do evento">`;
+                        }
+
+                        eventElement.innerHTML = `
+                            <span class="turno">Turno ${eventData.turno}</span>
+                            <div class="evento">
+                                ${iconHtml}
+                                <h4>${eventData.evento.nome}</h4>
+                                <p>${eventData.evento.descricao}</p>
+                            </div>
+                        `;
+                        diarioContainer.appendChild(eventElement);
+                        window.scrollTo(0, document.body.scrollHeight);
+                    } 
+                    // Se for a mensagem de fim da viagem
+                    else if (message.type === "trip_complete") {
+                        console.log("Simulação concluída. Exibindo resultados.");
+                        resultadoContainer.style.display = "block"; // Mostra os resultados
+                        window.scrollTo(0, document.body.scrollHeight);
+                        ws.close();
+                    }
+                };
+
+                // O que fazer em caso de erro de conexão
+                ws.onerror = function(error) {
+                    console.error("Erro no WebSocket:", error);
+                    diarioContainer.innerHTML = "<div class='diario-entrada'><p class='status-avariado' style='text-align: center;'><strong>Falha na conexão com o simulador.</strong><br>Verifique se o terminal com 'websocket_server.py' está rodando e recarregue a página.</p></div>";
+                };
+
+            } catch (e) {
+                console.error("Não foi possível criar o WebSocket:", e);
+                diarioContainer.innerHTML = "<div class='diario-entrada'><p class='status-avariado' style='text-align: center;'>Seu navegador não suporta WebSockets ou houve um erro de script.</p></div>";
+            }
+        });
+    </script>
 </body>
 </html>

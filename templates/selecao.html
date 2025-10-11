@@ -7,10 +7,12 @@
 </head>
 <body class="conteudo-centralizado">
     <header class="brand-header">
-        <img class="brand-logo" src="{{ url_for('static', filename='imagens/Group 3.png') }}" alt="Cosmo Casa logo" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='{{ url_for('static', filename='imagens/Group 3.png') }}'">
+        <img class="brand-logo" src="{{ url_for('static', filename='imagens/Group 3.png') }}" alt="Cosmo Casa logo" loading="lazy" decoding="async">
     </header>
+
     <div class="container-grande">
         <h2>Escolha seu Destino</h2>
+        
         <div class="toolbar-header mt-8 mb-8">
             <div></div>
             <div class="toolbar-row">
@@ -18,25 +20,36 @@
                 <a href="{{ url_for('missao.ranking_rodada') }}" class="botao">Ver Ranking</a>
             </div>
         </div>
+
         <div class="naves-container">
 
             {% for id, dados in missoes.items() %}
             <div class="nave-card">
                 <h4>{{ dados.nome }}</h4>
+                
                 <div>
-                    <img class="nave-imagem-placeholder" src="{{ url_for('static', filename='imagens/' + dados.imagem) }}" alt="Missão para {{ dados.nome }}" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='{{ url_for('static', filename='imagens/Group 3.png') }}'">
+                    <img 
+                        class="nave-imagem-placeholder" 
+                        src="{{ dados.imagem_nasa or dados.imagem_local }}"
+                        alt="Missão para {{ dados.nome }}" 
+                        loading="lazy" 
+                        decoding="async" 
+                        onerror="this.onerror=null; this.src='{{ dados.imagem_local }}';">
                 </div>
+                
                 <p class="missao-descricao">{{ dados.descricao }}</p>
+                
                 <div class="missao-stats">
                     {% for stat, valor in dados.stats.items() %}
                         <strong>{{ stat }}:</strong> {{ valor }}<br />
                     {% endfor %}
                 </div>
-        <a href="{{ url_for('missao.montagem_transporte', destino=id, codigo_sala=codigo_sala) }}" class="botao">Analisar Transporte</a>
+                
+                <a href="{{ url_for('missao.montagem_transporte', destino=id, codigo_sala=codigo_sala) }}" class="botao">Analisar Transporte</a>
             </div>
             {% endfor %}
 
         </div>
-</div>
+    </div>
 </body>
 </html>

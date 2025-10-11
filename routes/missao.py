@@ -138,9 +138,12 @@ def selecao_modulos(destino, nave_id):
 
 @missao_bp.route('/viagem/<string:destino>/<string:nave_id>', methods=['POST'])
 def viagem(destino, nave_id):
-    """Processa módulos selecionados e simula a viagem em turnos."""
+    """
+    Processa os módulos, PREPARA a simulação, guarda tudo na sessão e redireciona
+    para a página que fará a exibição em tempo real via WebSocket.
+    """
     try:
-        # Normalizar id de nave para chave interna
+        # --- Parte 1: Validação e Preparação ---
         alias = {
             'foguete-longa-marcha': 'longmarch8a',
             'longmarch8a': 'longmarch8a',
@@ -150,13 +153,9 @@ def viagem(destino, nave_id):
         nave_key = alias.get((nave_id or '').lower(), nave_id)
         nave = NAVES_ESPACIAIS.get(nave_key)
 
-        # Ler módulos selecionados e validar pelo menos um
         modulos_selecionados_ids = request.form.getlist('modulos_selecionados')
         if not modulos_selecionados_ids:
-            try:
-                session['erro_modulos'] = 'Selecione pelo menos um módulo antes de lançar a missão.'
-            except Exception:
-                pass
+            session['erro_modulos'] = 'Selecione pelo menos um módulo antes de lançar a missão.'
             codigo_sala = request.args.get('codigo_sala') or request.form.get('codigo_sala')
             if codigo_sala:
                 return redirect(url_for('missao.selecao_modulos', destino=destino, nave_id=nave_key, codigo_sala=codigo_sala))
@@ -171,37 +170,25 @@ def viagem(destino, nave_id):
         else:
             total_turnos = 15
 
-        # Guardar módulos escolhidos para uso posterior no Habitat
-        try:
-            session['modulos_selecionados'] = modulos_selecionados_ids
-        except Exception:
-            logging.exception('Falha ao salvar módulos selecionados na sessão')
+        session['modulos_selecionados'] = modulos_selecionados_ids
 
-        # IA simples: personalizar mensagens por turno com base nos módulos e destino
+        # --- Parte 2: Geração do Diário de Bordo ---
         ids_set = set(modulos_selecionados_ids)
         ids_list = list(ids_set)
         diario_de_bordo = []
 
         def evento_personalizado(turno:int):
-            # 30% de chance de evento aleatório conhecido; caso contrário, evento positivo personalizado
             if random.random() < (0.3 if destino != 'exoplaneta' else 0.4):
                 base = random.choice([e for e in EVENTOS_ALEATORIOS if e.get('nome') != 'Tudo Calmo'])
                 evt = dict(base)
-                # Ícones por evento aleatório
                 icones_eventos = {
-                    'Tempestade Solar': 'solar-storm.svg',
-                    'Falha Mecânica Menor': 'wrench.svg',
-                    'Impacto de Micrometeoroide': 'meteor.svg',
-                    'Surto de Energia': 'surge.svg',
+                    'Tempestade Solar': 'solar-storm.svg', 'Falha Mecânica Menor': 'wrench.svg',
+                    'Impacto de Micrometeoroide': 'meteor.svg', 'Surto de Energia': 'surge.svg',
                     'Navegação Otimizada': 'navigation.svg'
                 }
                 evt['icone'] = icones_eventos.get(base['nome'], 'event-default.svg')
-                # Ajuste descritivo conforme módulos presentes
                 if base['nome'] == 'Tempestade Solar':
-                    if 'suporte_vida' in ids_set:
-                        evt['descricao'] += ' Sistemas de suporte mantêm níveis estáveis para a tripulação.'
-                    else:
-                        evt['descricao'] += ' A ausência de Suporte à Vida agrava a resposta da tripulação.'
+                    evt['descricao'] += ' Sistemas de suporte mantêm níveis estáveis para a tripulação.' if 'suporte_vida' in ids_set else ' A ausência de Suporte à Vida agrava a resposta da tripulação.'
                 elif base['nome'] == 'Falha Mecânica Menor' and 'impressao3d' in ids_set:
                     evt['descricao'] += ' A Impressão 3D fabrica uma peça de reposição e reduz o atraso.'
                 elif base['nome'] == 'Impacto de Micrometeoroide' and 'armazenamento' in ids_set:
@@ -211,42 +198,26 @@ def viagem(destino, nave_id):
                 elif base['nome'] == 'Navegação Otimizada' and 'exercicios' in ids_set:
                     evt['descricao'] += ' A equipe em boa forma física mantém procedimentos com precisão.'
                 return evt
-            # Evento positivo relacionado a um módulo selecionado
             if ids_list:
                 mod_id = ids_list[(turno - 1) % len(ids_list)]
                 mod = MODULOS_HABITAT.get(mod_id, {"nome": mod_id})
                 nome_evt = f"Operação do Módulo: {mod.get('nome')}"
                 dicas = {
-                    'hidroponia': 'Produção de alimentos estabiliza moral e reduz consumo de estoque.',
-                    'medico': 'Atendimento médico lida com indisposição leve na tripulação.',
-                    'airlock': 'EVA realizada para inspeção externa; retorno seguro ao habitat.',
-                    'impressao3d': 'Peça fabricada para reparo rápido de um subsistema.',
-                    'sanitario': 'Sistema de reciclagem de água mantém níveis adequados.',
-                    'armazenamento': 'Reorganização de suprimentos otimiza acesso e segurança.',
-                    'exercicios': 'Rotina de exercícios mitiga fadiga em microgravidade.',
-                    'inflavel': 'Módulo expansível aumenta volume útil para operações.',
-                    'pesquisa': 'Experimento científico rende dados importantes da missão.',
-                    'alimentacao': 'Refeição balanceada melhora coesão da equipe.',
-                    'habitacional': 'Descanso adequado melhora desempenho da equipe.',
-                    'suporte_vida': 'Níveis de oxigênio e pressão se mantêm estáveis.'
+                    'hidroponia': 'Produção de alimentos estabiliza moral e reduz consumo de estoque.', 'medico': 'Atendimento médico lida com indisposição leve na tripulação.',
+                    'airlock': 'EVA realizada para inspeção externa; retorno seguro ao habitat.', 'impressao3d': 'Peça fabricada para reparo rápido de um subsistema.',
+                    'sanitario': 'Sistema de reciclagem de água mantém níveis adequados.', 'armazenamento': 'Reorganização de suprimentos otimiza acesso e segurança.',
+                    'exercicios': 'Rotina de exercícios mitiga fadiga em microgravidade.', 'inflavel': 'Módulo expansível aumenta volume útil para operações.',
+                    'pesquisa': 'Experimento científico rende dados importantes da missão.', 'alimentacao': 'Refeição balanceada melhora coesão da equipe.',
+                    'habitacional': 'Descanso adequado melhora desempenho da equipe.', 'suporte_vida': 'Níveis de oxigênio e pressão se mantêm estáveis.'
                 }
                 icones_modulos = {
-                    'hidroponia': 'plant.svg',
-                    'medico': 'medical.svg',
-                    'airlock': 'airlock.svg',
-                    'impressao3d': 'printer3d.svg',
-                    'sanitario': 'water-recycle.svg',
-                    'armazenamento': 'storage.svg',
-                    'exercicios': 'dumbbell.svg',
-                    'inflavel': 'expand.svg',
-                    'pesquisa': 'flask.svg',
-                    'alimentacao': 'food.svg',
-                    'habitacional': 'habitat.svg',
-                    'suporte_vida': 'life-support.svg'
+                    'hidroponia': 'plant.svg', 'medico': 'medical.svg', 'airlock': 'airlock.svg',
+                    'impressao3d': 'printer3d.svg', 'sanitario': 'water-recycle.svg', 'armazenamento': 'storage.svg',
+                    'exercicios': 'dumbbell.svg', 'inflavel': 'expand.svg', 'pesquisa': 'flask.svg',
+                    'alimentacao': 'food.svg', 'habitacional': 'habitat.svg', 'suporte_vida': 'life-support.svg'
                 }
                 desc = dicas.get(mod_id, 'O módulo contribui positivamente para o andamento da missão.')
                 return {"nome": nome_evt, "descricao": desc, "efeito": "nenhum", "icone": icones_modulos.get(mod_id, 'module-default.svg')}
-            # Fallback
             return {"nome": "Rotina Estável", "descricao": "A equipe segue procedimentos padrão enquanto sistemas operam normalmente.", "efeito": "nenhum", "icone": "calm.svg"}
 
         for turno_atual in range(1, total_turnos + 1):
@@ -256,181 +227,122 @@ def viagem(destino, nave_id):
                 modulo_avariado_id = random.choice(list(modulos_a_bordo.keys()))
                 modulos_a_bordo[modulo_avariado_id]['status'] = 'Avariado'
 
-        codigo_sala = request.args.get('codigo_sala') or request.form.get('codigo_sala')
-        if codigo_sala:
-            try:
-                try:
-                    db_manager.atualizar_destino_e_nave(codigo_sala, destino, nave_key)
-                except Exception:
-                    logging.exception("Falha ao atualizar destino/nave da sala")
-                titulo = f"Missão {destino.capitalize()} — {nave['nome'] if nave else nave_id}"
-                descricao = f"Missão planejada com {len(modulos_a_bordo)} módulos selecionados."
-                sala = db_manager.buscar_sala_por_codigo_any(codigo_sala)
-                if sala:
-                    try:
-                        desafios = json.loads(sala.get('desafios_json') or '[]')
-                    except Exception:
-                        desafios = []
-                    desafios.append({'titulo': titulo, 'descricao': descricao})
-                    db_manager.atualizar_desafios_json(codigo_sala, json.dumps(desafios, ensure_ascii=False))
-            except Exception:
-                logging.exception("Falha ao anexar desafio à sala")
-            # Permitir que a simulação prossiga mesmo sem aluno logado
-
-        # --- Cálculo de chegada e pontuação ---
+        # --- Parte 3: Definição da Função de Cálculo e Execução ---
+        
         def calcular_resultado_e_pontos(destino_val, nave_val, modulos_dict, diario):
-            # Base da pontuação por dificuldade
             dificuldade_base = {'lua': 50, 'marte': 120, 'exoplaneta': 300}.get(destino_val, 50)
-
-            # Essenciais por destino
             essenciais_por_destino = {
                 'lua': {'suporte_vida', 'habitacional'},
                 'marte': {'suporte_vida', 'habitacional', 'medico'},
                 'exoplaneta': {'suporte_vida', 'habitacional', 'blindagem', 'controle', 'hidroponia'}
             }
             essenciais = essenciais_por_destino.get(destino_val, {'suporte_vida', 'habitacional'})
-
             presentes = set(modulos_dict.keys())
             faltantes = essenciais - presentes
             pontos = dificuldade_base
             pontos += 20 * len(essenciais.intersection(presentes))
             pontos -= 25 * len(faltantes)
-
-            # Massa e capacidade por dificuldade
             capacidade_kg = (nave_val.get('capacidade_carga', 0) or 0) * 1000 if nave_val else 0
             massa_total = sum(m.get('massa', 0) for m in modulos_dict.values())
             if capacidade_kg > 0:
                 ratio = (massa_total / capacidade_kg)
                 if destino_val == 'lua':
-                    # Lua: mais maleável, aceita até 120% da capacidade com penalização
-                    if massa_total > capacidade_kg * 1.2:
-                        pontos -= 60
-                    elif massa_total > capacidade_kg:
-                        pontos -= 30
-                    elif 0.5 <= ratio <= 1.0:
-                        pontos += 20
+                    if massa_total > capacidade_kg * 1.2: pontos -= 60
+                    elif massa_total > capacidade_kg: pontos -= 30
+                    elif 0.5 <= ratio <= 1.0: pontos += 20
                 elif destino_val == 'marte':
-                    # Marte: mediano, precisa respeitar capacidade, premia boa ocupação
-                    if massa_total > capacidade_kg:
-                        pontos -= 50
-                    elif 0.6 <= ratio <= 0.95:
-                        pontos += 30
+                    if massa_total > capacidade_kg: pontos -= 50
+                    elif 0.6 <= ratio <= 0.95: pontos += 30
                 else:
-                    # Exoplaneta: difícil, exige margem de segurança
-                    if massa_total > capacidade_kg * 0.95:
-                        pontos -= 60
-                    elif 0.6 <= ratio <= 0.9:
-                        pontos += 25
-
-            # Avarias com penalização por destino
+                    if massa_total > capacidade_kg * 0.95: pontos -= 60
+                    elif 0.6 <= ratio <= 0.9: pontos += 25
             avariados = sum(1 for m in modulos_dict.values() if m.get('status') == 'Avariado')
             penal_por_avaria = {'lua': 8, 'marte': 10, 'exoplaneta': 14}.get(destino_val, 10)
             pontos -= avariados * penal_por_avaria
-
-            # Gate de chegada por dificuldade
             allowed_missing = {'lua': 2, 'marte': 1, 'exoplaneta': 0}.get(destino_val, 1)
             tolerancia_avarias = {'lua': 3, 'marte': 2, 'exoplaneta': 1}.get(destino_val, 2)
-
-            # Regras de massa para gate
-            if destino_val == 'lua':
-                massa_ok = (capacidade_kg == 0) or (massa_total <= capacidade_kg * 1.2)
-            elif destino_val == 'marte':
-                massa_ok = (capacidade_kg == 0) or (massa_total <= capacidade_kg)
-            else:
-                massa_ok = (capacidade_kg == 0) or (massa_total <= capacidade_kg * 0.95)
-
+            if destino_val == 'lua': massa_ok = (capacidade_kg == 0) or (massa_total <= capacidade_kg * 1.2)
+            elif destino_val == 'marte': massa_ok = (capacidade_kg == 0) or (massa_total <= capacidade_kg)
+            else: massa_ok = (capacidade_kg == 0) or (massa_total <= capacidade_kg * 0.95)
             chegou = (len(faltantes) <= allowed_missing) and massa_ok and (avariados <= tolerancia_avarias)
             return chegou, max(pontos, 0), massa_total, capacidade_kg
 
+        # Chamada da função de cálculo
         chegada_ok, pontuacao, massa_total, capacidade_kg = calcular_resultado_e_pontos(destino, nave, modulos_a_bordo, diario_de_bordo)
 
-        # Persistir em sessão para gate do Habitat
-        session['chegada_ok'] = chegada_ok
-        session['missao_score'] = pontuacao
-        session['missao_destino'] = destino
-        session['missao_nave'] = nave_key
+        # --- Lógica de Banco de Dados e Feedback ---
+        
+        codigo_sala = request.args.get('codigo_sala') or request.form.get('codigo_sala')
+        if codigo_sala:
+            try:
+                db_manager.atualizar_destino_e_nave(codigo_sala, destino, nave_key)
+                titulo = f"Missão {destino.capitalize()} — {nave['nome'] if nave else nave_id}"
+                descricao = f"Missão planejada com {len(modulos_a_bordo)} módulos selecionados."
+                sala = db_manager.buscar_sala_por_codigo_any(codigo_sala)
+                if sala:
+                    desafios = json.loads(sala.get('desafios_json') or '[]')
+                    desafios.append({'titulo': titulo, 'descricao': descricao})
+                    db_manager.atualizar_desafios_json(codigo_sala, json.dumps(desafios, ensure_ascii=False))
+            except Exception:
+                logging.exception("Falha ao anexar desafio à sala")
 
-        # Gerar feedback inteligente em caso de falha
-        try:
-            if not chegada_ok:
+        if not chegada_ok:
+            try:
                 essenciais_por_destino = {
-                    'lua': {'suporte_vida', 'habitacional'},
-                    'marte': {'suporte_vida', 'habitacional', 'medico'},
+                    'lua': {'suporte_vida', 'habitacional'}, 'marte': {'suporte_vida', 'habitacional', 'medico'},
                     'exoplaneta': {'suporte_vida', 'habitacional', 'blindagem', 'controle', 'hidroponia'}
                 }
-                essenciais = essenciais_por_destino.get(destino, {'suporte_vida', 'habitacional'})
+                essenciais = essenciais_por_destino.get(destino, set())
                 presentes = set(modulos_a_bordo.keys())
                 faltantes = list(essenciais - presentes)
-                avariados = [k for k, m in modulos_a_bordo.items() if m.get('status') == 'Avariado']
-                ratio = (massa_total / capacidade_kg) if (capacidade_kg or 0) > 0 else 0
                 causas = []
-                if faltantes:
-                    causas.append(f"Módulos essenciais ausentes: {', '.join(faltantes)}.")
-                if destino == 'lua' and capacidade_kg and massa_total > capacidade_kg * 1.2:
-                    causas.append('Excesso de massa acima de 120% da capacidade da nave.')
-                elif destino == 'marte' and capacidade_kg and massa_total > capacidade_kg:
-                    causas.append('Massa total excedeu a capacidade da nave.')
-                elif destino == 'exoplaneta' and capacidade_kg and massa_total > capacidade_kg * 0.95:
-                    causas.append('Para exoplaneta, a margem de segurança de massa não foi atendida (95%).')
-                if avariados:
-                    causas.append(f"Avarias em módulos críticos: {', '.join(avariados)}.")
-                resumo = (
-                    f"Destino: {destino.capitalize()} | Nave: {nave.get('nome') if nave else nave_key} | "
-                    f"Massa: {int(massa_total)}kg / Capacidade: {int(capacidade_kg)}kg (uso {int(ratio*100)}%)."
-                )
-                feedback = "\n".join(["Análise de Game Over:", resumo] + (causas or ["Condições insuficientes para a missão."]))
-                session['missao_feedback'] = feedback
-        except Exception:
-            logging.exception('Falha ao gerar feedback de Game Over')
-
-        # Registrar pontuação no ranking apenas se aluno estiver logado
+                if faltantes: causas.append(f"Módulos essenciais ausentes: {', '.join(faltantes)}.")
+                session['missao_feedback'] = "\n".join(["Análise de Game Over:"] + causas)
+            except Exception:
+                logging.exception('Falha ao gerar feedback de Game Over')
+        
         try:
             aluno_id = session.get('aluno_id')
             sala_id = session.get('sala_id')
-            if not (aluno_id and sala_id):
-                # Sem sessão de aluno: não registrar pontos
-                logging.info('Missão executada sem aluno logado; pontos não serão registrados.')
-            else:
-                detalhes = {
-                    'destino': destino,
-                    'nave_id': nave_id,
-                    'massa_total': massa_total,
-                    'capacidade_kg': capacidade_kg,
-                    'essenciais_ok': chegada_ok,
-                    'aviso': 'pontuação de missão'
-                }
+            if aluno_id and sala_id:
+                detalhes = {'destino': destino, 'nave_id': nave_id, 'massa_total': massa_total, 'capacidade_kg': capacidade_kg}
                 db_manager.registrar_resposta_desafio(
-                    aluno_id, sala_id, 'missao_score', json.dumps(detalhes, ensure_ascii=False), 1, int(pontuacao)
+                    aluno_id, sala_id, 'missao_score', json.dumps(detalhes), 1, int(pontuacao)
                 )
         except Exception:
-            logging.exception('Falha ao registrar pontuação da missão no ranking')
+            logging.exception('Falha ao registrar pontuação da missão')
 
-        # PRG: salvar resultados e redirecionar para GET
-        try:
-            session['viagem_diario'] = diario_de_bordo
-            session['viagem_destino'] = destino
-            session['viagem_nave_id'] = nave_key
-            session['viagem_nave'] = nave
-            session['viagem_modulos'] = modulos_a_bordo
-            session['viagem_chegada_ok'] = chegada_ok
-            session['viagem_pontuacao'] = pontuacao
-            session['missao_etapa'] = 'viagem'
-        except Exception:
-            logging.exception('Falha ao salvar dados da viagem na sessão')
-        codigo_sala = request.args.get('codigo_sala') or request.form.get('codigo_sala')
+        # --- Parte 4: Salvar tudo na sessão ---
+        session['viagem_diario'] = diario_de_bordo
+        session['viagem_destino'] = destino
+        session['viagem_nave_id'] = nave_key
+        session['viagem_nave'] = nave
+        session['viagem_modulos'] = modulos_a_bordo
+        session['viagem_chegada_ok'] = chegada_ok
+        session['viagem_pontuacao'] = pontuacao
+        # Compatibilidade com páginas subsequentes (Habitat/finalização)
+        session['chegada_ok'] = chegada_ok
+        session['missao_score'] = pontuacao
+        session['missao_etapa'] = 'viagem'
+
+        logging.info(f"Simulação preparada para {destino}. Redirecionando para a exibição da viagem.")
+
+        # --- Parte 5: Redirecionar para a rota GET ---
         if codigo_sala:
             return redirect(url_for('missao.viagem_get', destino=destino, nave_id=nave_key, codigo_sala=codigo_sala))
         return redirect(url_for('missao.viagem_get', destino=destino, nave_id=nave_key))
-    except Exception:
-        logging.exception("Falha ao processar viagem")
-        return "Erro ao processar a viagem", 500
+
+    except Exception as e:
+        logging.exception(f"Falha ao processar POST da viagem: {e}")
+        return redirect(url_for('missao.retry_modulos'))
 
 
 @missao_bp.route('/habitat')
 def habitat():
     """Gate para a montagem do Habitat: somente após chegada bem-sucedida."""
     try:
-        if not session.get('chegada_ok'):
+        # Aceita tanto a chave antiga quanto a nova para indicar chegada
+        if not (session.get('chegada_ok') or session.get('viagem_chegada_ok')):
             return redirect(url_for('missao.game_over'))
         # Carregar módulos previamente selecionados para limitar a paleta
         mod_ids = session.get('modulos_selecionados') or []
@@ -632,18 +544,33 @@ def ranking_rodada():
         logging.exception('Falha ao renderizar ranking da rodada')
         return "Erro ao renderizar ranking", 500
 @missao_bp.route('/viagem/<string:destino>/<string:nave_id>', methods=['GET'], endpoint='viagem_get')
+@missao_bp.route('/viagem/<string:destino>/<string:nave_id>', methods=['GET'], endpoint='viagem_get')
 def viagem_get(destino, nave_id):
-    """Exibe resultados da viagem via GET (PRG)."""
+    """Exibe a página da viagem, buscando os dados da sessão."""
     try:
+        # Pega todos os dados da sessão que a simulação preparou
         diario = session.get('viagem_diario')
-        destino_sess = session.get('viagem_destino') or destino
+        destino_sess = session.get('viagem_destino')
         nave = session.get('viagem_nave')
         modulos = session.get('viagem_modulos')
         chegada_ok = session.get('viagem_chegada_ok')
         pontuacao = session.get('viagem_pontuacao')
-        if not diario or not modulos:
+
+        # Verificação rigorosa: se qualquer dado essencial estiver faltando, redireciona para a seleção de módulos
+        if not all([diario, destino_sess, nave, modulos, chegada_ok is not None, pontuacao is not None]):
+            logging.error("Dados da viagem faltando na sessão. Redirecionando para a seleção de módulos.")
             return redirect(url_for('missao.retry_modulos'))
-        return render_template('viagem.html', diario=diario, destino=destino_sess, nave=nave, modulos=modulos, chegada_ok=chegada_ok, pontuacao=pontuacao)
-    except Exception:
-        logging.exception('Falha ao exibir viagem (GET)')
-        return "Erro ao exibir a viagem", 500
+
+        # Se todos os dados estiverem OK, renderiza a página
+        return render_template(
+            'viagem.html', 
+            diario=diario, 
+            destino=destino_sess, 
+            nave=nave, 
+            modulos=modulos, 
+            chegada_ok=chegada_ok, 
+            pontuacao=pontuacao
+        )
+    except Exception as e:
+        logging.exception(f'Falha CRÍTICA ao exibir a página da viagem (GET): {e}')
+        return "<h1>Erro 500</h1><p>Ocorreu um erro ao carregar a página da viagem. Verifique os logs do servidor.</p>", 500

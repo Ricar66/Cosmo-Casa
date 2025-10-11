@@ -25,6 +25,8 @@ import os
 from datetime import datetime, timedelta
 import secrets
 import threading
+import requests
+import logging
 
 # Inicializa a aplicação Flask
 app = Flask(__name__)
@@ -36,6 +38,7 @@ from routes.professor import professor_bp
 from routes.aluno import aluno_bp
 from routes.missao import missao_bp
 from services.data import NAVES_ESPACIAIS, MODULOS_HABITAT, EVENTOS_ALEATORIOS  # Catálogos estáticos para UI/simulações
+logging.basicConfig(level=logging.INFO)
 
 
 # Removido o uso de json_store: sistema unificado em SQLite
@@ -277,46 +280,37 @@ def tela_inicial():
     return render_template('index.html')
 
 # Rota para a página de seleção de missão ('/selecao')
+# app.py
+
 @app.route('/selecao')
 def tela_selecao():
-    """Tela de seleção de destino com cards educativos e estatísticas."""
+    """Tela de seleção com imagens da NASA e fallback local garantido."""
     missoes = {
         'lua': {
-            'nome': 'Lua', 
-            'imagem': 'lua.png',
-            # ADIÇÃO: Descrição e stats para o card
+            'nome': 'Lua',
+            # Tenta buscar na NASA, se falhar, o valor será None
+            'imagem_nasa': buscar_imagem_nasa('apollo moon landing'),
+            # URL local garantida
+            'imagem_local': url_for('static', filename='imagens/Lua.png'),
             'descricao': 'A porta de entrada para a exploração espacial. Um ambiente conhecido, ideal para testar novos habitats e tecnologias com menor risco.',
-            'stats': {
-                'Distância': '384.400 km',
-                'Duração Estimada': 'Curta (15 turnos)',
-                'Riscos': 'Baixos'
-            }
+            'stats': {'Distância': '384.400 km', 'Duração Estimada': 'Curta (15 turnos)', 'Riscos': 'Baixos'}
         },
         'marte': {
-            'nome': 'Marte', 
-            'imagem': 'marte.png',
-            # ADIÇÃO: Descrição e stats para o card
+            'nome': 'Marte',
+            # 'imagem_nasa': buscar_imagem_nasa('planet mars'),
+            'imagem_local': url_for('static', filename='imagens/Marte.png'),
             'descricao': 'O próximo grande salto da humanidade. Enfrente tempestades de poeira e um ambiente hostil em uma missão de longa duração.',
-            'stats': {
-                'Distância': '225 milhões km',
-                'Duração Estimada': 'Longa (60 turnos)',
-                'Riscos': 'Elevados'
-            }
+            'stats': {'Distância': '225 milhões km', 'Duração Estimada': 'Longa (60 turnos)', 'Riscos': 'Elevados'}
         },
         'exoplaneta': {
-            'nome': 'Exoplaneta', 
-            'imagem': 'Exoplaneta.png',
-            # ADIÇÃO: Descrição e stats para o card
+            'nome': 'Exoplaneta',
+            'imagem_nasa': buscar_imagem_nasa('Kepler telescope exoplanet concept'),
+            'imagem_local': url_for('static', filename='imagens/Exoplaneta.png'),
             'descricao': 'Uma jornada para as estrelas em busca de um novo lar. Desafios desconhecidos e extremos aguardam no primeiro habitat interestelar.',
-            'stats': {
-                'Distância': '500 anos-luz',
-                'Duração Estimada': 'Extrema (250 turnos)',
-                'Riscos': 'Desconhecidos'
-            }
+            'stats': {'Distância': '500 anos-luz', 'Duração Estimada': 'Extrema (250 turnos)', 'Riscos': 'Desconhecidos'}
         }
     }
     return render_template('selecao.html', missoes=missoes, codigo_sala=request.args.get('codigo_sala'))
-
 # NOVA ROTA: Tela para montar o transporte
 # Rota de montagem de transporte movida para blueprint missao
 
@@ -438,6 +432,60 @@ def criar_desafios_padrao(destino):
                 'tipo': 'texto'
             }
         ]
+
+# Sua chave da API da NASA aqui
+NASA_API_KEY = 'IdakpPAlUh3A0M2Qc8RXPgjDlICN9Yi5OwndZgWM'
+
+def buscar_imagem_nasa(query):
+    """
+    Busca uma imagem na NASA de forma robusta, com diagnóstico no terminal.
+    """
+    search_url = f"https://images-api.nasa.gov/search?q={query}&media_type=image"
+    logging.info(f"[API] Etapa 1: Buscando na NASA com a URL: {search_url}")
+    
+    try:
+        # Etapa 1: Fazer a busca inicial
+        search_response = requests.get(search_url, timeout=10)
+        search_response.raise_for_status() # Verifica se houve erro na requisição (4xx ou 5xx)
+        search_data = search_response.json()
+
+        if not search_data.get("collection", {}).get("items"):
+            logging.warning(f"[API] Nenhum resultado encontrado na NASA para a busca '{query}'.")
+            return None
+
+        # Pega o primeiro item da busca
+        first_item = search_data["collection"]["items"][0]
+        asset_manifest_url = first_item.get("href")
+
+        if not asset_manifest_url:
+            logging.warning("[API] O item da busca não continha um link para os detalhes (href).")
+            return None
+
+        # Etapa 2: Buscar os detalhes do item para pegar um link de imagem válido
+        logging.info(f"[API] Etapa 2: Buscando detalhes do item em: {asset_manifest_url}")
+        manifest_response = requests.get(asset_manifest_url, timeout=10)
+        manifest_response.raise_for_status()
+        manifest_data = manifest_response.json()
+
+        # Procura por um link de imagem de tamanho médio ou original
+        for image_url in manifest_data:
+            if "medium.jpg" in image_url or "orig.jpg" in image_url:
+                logging.info(f"[API] SUCESSO! Imagem encontrada para '{query}': {image_url}")
+                return image_url
+        
+        # Se não achar um link ideal, pega o primeiro que encontrar
+        if manifest_data:
+            fallback_url = manifest_data[0]
+            logging.info(f"[API] Usando primeira imagem disponível como fallback: {fallback_url}")
+            return fallback_url
+
+    except requests.exceptions.RequestException as e:
+        logging.error(f"!!! [API] ERRO CRÍTICO ao se comunicar com a NASA para '{query}': {e}")
+        return None
+    
+    logging.error(f"[API] Falha inesperada ao processar a busca por '{query}'.")
+    return None
+
 
 # --- EXECUÇÃO DO SERVIDOR ---
 if __name__ == '__main__':
