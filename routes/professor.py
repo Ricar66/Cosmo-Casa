@@ -95,7 +95,7 @@ def login():
             count = cursor.fetchone()[0]
             if count == 0:
                 # Cria admin padrão com senha 'admin' e exige troca
-                default_hash = generate_password_hash('admin')
+                default_hash = generate_password_hash('123456')
                 cursor.execute(
                     'INSERT INTO admins (username, password_hash, must_change, created_at) VALUES (?, ?, ?, ?)',
                     ('admin', default_hash, 1, datetime.utcnow().isoformat())
