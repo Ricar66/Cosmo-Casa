@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Seleção de Módulos</title>
+    <title>Module Selection</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body class="conteudo-centralizado selecao-modulos">
@@ -12,10 +12,10 @@
     </header>
     <div class="container-grande toolbar-row mt-8 mb-8">
         {% if not session.get('aluno_id') %}
-            <a href="{{ url_for('missao.montagem_transporte', destino=destino, codigo_sala=codigo_sala) }}" class="botao">Voltar</a>
+            <a href="{{ url_for('missao.montagem_transporte', destino=destino, codigo_sala=codigo_sala) }}" class="botao">Back</a>
         {% endif %}
-        <a href="{{ url_for('aluno.aluno_entrar') }}" class="botao">Finalizar o Game</a>
-        <a href="{{ url_for('missao.ranking_rodada') }}" class="botao">Ver Ranking</a>
+        <a href="{{ url_for('aluno.aluno_entrar') }}" class="botao">Finish Game</a>
+        <a href="{{ url_for('missao.ranking_rodada') }}" class="botao">View Ranking</a>
     </div>
     {% if session.get('erro_modulos') %}
     <div class="container-grande mt-8">
@@ -26,16 +26,18 @@
     {% endif %}
 <form class="container-grande" action="{{ url_for('missao.viagem', destino=destino, nave_id=nave_id, codigo_sala=codigo_sala) }}" method="POST">
         
-        <h2>Montagem da Carga</h2>
+        <h2>Cargo Assembly</h2>
+        {% set destino_en_map = {'lua': 'Moon', 'marte': 'Mars', 'exoplaneta': 'Exoplanet'} %}
+        {% set destino_display = destino_en_map.get(destino.lower(), destino.capitalize()) %}
         <div class="info-nave">
-            <span>Missão: <strong>{{ destino.capitalize() }}</strong></span>
-            <span>Nave: <strong>{{ nave.nome }}</strong></span>
+            <span>Mission: <strong>{{ destino_display }}</strong></span>
+            <span>Spacecraft: <strong>{{ nave.nome }}</strong></span>
         </div>
 
         <div class="sumario-carga">
-            <h3>Sumário da Missão</h3>
+            <h3>Mission Summary</h3>
             <p>
-                Massa Total Selecionada: 
+                Total Selected Mass: 
                 <span id="massa-total">0</span> kg / 
                 <span id="capacidade-carga">{{ (nave.capacidade_carga * 1000) | int }}</span> kg
             </p>
@@ -43,40 +45,40 @@
                 <div id="barra-progresso" class="barra-progresso"></div>
             </div>
             
-            <!-- Novas informações de performance -->
+            <!-- Performance information -->
             <div id="info-performance" class="info-performance mt-16">
-                <h4>Análise da Missão</h4>
+                <h4>Mission Analysis</h4>
                 <p>
-                    <strong>Capacidade Máxima:</strong> 
-                    <span id="capacidade-maxima">Calculando...</span>
+                    <strong>Maximum Capacity:</strong> 
+                    <span id="capacidade-maxima">Calculating...</span>
                 </p>
                 <p>
-                    <strong>Duração Estimada:</strong> 
-                    <span id="duracao-missao">Calculando...</span>
+                    <strong>Estimated Duration:</strong> 
+                    <span id="duracao-missao">Calculating...</span>
                 </p>
                 <p id="explicacao-duracao">
-                    Duração base calculada para missão {{ destino.capitalize() }}
+                    Base duration calculated for mission {{ destino_display }}
                 </p>
             </div>
             
-            <!-- Informações de sobrevivência apenas para missões lunares -->
+            <!-- Survival information only for lunar missions -->
             {% if destino.lower() == 'lua' %}
             <div id="info-sobrevivencia" class="info-sobrevivencia mt-16">
-                <h4>🧭 Orientações de Sobrevivência Lunar</h4>
+                <h4>🧭 Lunar Survival Guidelines</h4>
                 <ul class="list-clean">
-                    <li>Mantenha sistemas de suporte vital prioritários</li>
-                    <li>Verifique selagem dos módulos habitacionais</li>
-                    <li>Monitore níveis de oxigênio e pressão interna</li>
-                    <li>Conserve energia durante períodos de baixa luz solar</li>
-                    <li>Mantenha estoque de emergência para 48 horas</li>
+                    <li>Keep life support systems prioritized</li>
+                    <li>Verify sealing of habitat modules</li>
+                    <li>Monitor oxygen levels and internal pressure</li>
+                    <li>Conserve energy during periods of low sunlight</li>
+                    <li>Maintain emergency stock for 48 hours</li>
                 </ul>
             </div>
             {% endif %}
         </div>
 
-        <h3>Módulos Disponíveis</h3>
+        <h3>Available Modules</h3>
         <div class="modulos-controls">
-            <input type="text" id="filtro-modulos" placeholder="Filtrar módulos..." aria-label="Filtrar módulos">
+            <input type="text" id="filtro-modulos" placeholder="Filter modules..." aria-label="Filter modules">
         </div>
         {% set ordem_modulos = [
             'suporte_vida','habitacional','alimentacao','medico','exercicios','pesquisa',
@@ -95,15 +97,15 @@
                     <h4 id="modulo-titulo-{{ id }}">{{ modulo.nome }}</h4>
                     </div>
                     <div class = 'modulos-stats'>
-                    <p><strong>Massa:</strong> {{ modulo.massa }} kg</p>
-                    <p><strong>Energia:</strong> {{ modulo.energia }} kWh/dia</p>
-                    <p><strong>Água:</strong> {{ modulo.agua }} L/dia</p>
+                    <p><strong>Mass:</strong> {{ modulo.massa }} kg</p>
+                    <p><strong>Energy:</strong> {{ modulo.energia }} kWh/day</p>
+                    <p><strong>Water:</strong> {{ modulo.agua }} L/day</p>
                     </div>
                 
                 <div class="controles-modulo">
-                    <button type="button" class="botao-adicionar" title="Adicionar módulo">+</button>
-                    <button type="button" class="botao-modulo">Adicionar</button>
-                    <button type="button" class="botao-remover" title="Remover módulo">−</button>
+                    <button type="button" class="botao-adicionar" title="Add module">+</button>
+                    <button type="button" class="botao-modulo">Add</button>
+                    <button type="button" class="botao-remover" title="Remove module">−</button>
                 </div>
             </div>
             {% endif %}
@@ -111,13 +113,13 @@
         </div>
         
         <div id="modulos-selecionados-hidden"></div>
-        <button type="submit" class="botao" id="botao-lancar">Lançar Missão</button>
+        <button type="submit" class="botao" id="botao-lancar">Launch Mission</button>
         
     </form>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     <script>
-    // Bloqueio: impedir lançamento sem ao menos um módulo selecionado
+    // Block: prevent launch without at least one selected module
     document.addEventListener('DOMContentLoaded', function(){
         const form = document.querySelector('form.container-grande[action*="/viagem/"]');
         const hidden = document.getElementById('modulos-selecionados-hidden');
@@ -141,7 +143,7 @@
                 const count = hidden.querySelectorAll('input[name="modulos_selecionados"]').length;
                 if (count === 0) {
                     e.preventDefault();
-                    alert('Selecione pelo menos um módulo para lançar a missão.');
+                    alert('Select at least one module to launch the mission.');
                 }
             });
         }

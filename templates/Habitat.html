@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Cosmo Casa – Editor</title>
+<title>Cosmo Casa – Habitat Editor</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='css/habitat.css') }}">
 </head>
 <body>
@@ -11,13 +11,13 @@
   <!-- Barra de navegação simples (ajustada para baixo/esquerda e estilo padronizado) -->
   <div class="fixed-actions">
     {% if session.get('missao_destino') and session.get('missao_nave') %}
-      <a href="{{ url_for('missao.selecao_modulos', destino=session.get('missao_destino'), nave_id=session.get('missao_nave')) }}" class="botao">Voltar</a>
+      <a href="{{ url_for('missao.selecao_modulos', destino=session.get('missao_destino'), nave_id=session.get('missao_nave')) }}" class="botao">Back</a>
     {% else %}
-      <a href="{{ url_for('tela_selecao') }}" class="botao">Voltar</a>
+      <a href="{{ url_for('tela_selecao') }}" class="botao">Back</a>
     {% endif %}
     <form id="finalizarForm" action="{{ url_for('missao.habitat_finalizar') }}" method="POST" class="form-no-margin">
       <input type="hidden" name="habitat_score" id="habitatScoreInput" value="0" />
-      <button id="btn-finalizar" type="submit" class="botao" title="Monte seu habitat para liberar a finalização" disabled>Finalizar o Game</button>
+      <button id="btn-finalizar" type="submit" class="botao" title="Build your habitat to enable finishing" disabled>Finish Game</button>
     </form>
   </div>
   <!-- ESQUERDA -->
@@ -26,11 +26,11 @@
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
         <path d="M12 2l4 4-4 4-4-4 4-4zM4 14l4-4 4 4-4 4-4-4zm16 0l-4-4-4 4 4 4 4-4z"/>
       </svg>
-      <div><div class="brand">Cosmo Casa</div><div class="brand-subtitle">Editor de Habitat</div></div>
+      <div><div class="brand">Cosmo Casa</div><div class="brand-subtitle">Habitat Editor</div></div>
     </div>
 
     <div class="section">
-      <h4>Conexões</h4>
+      <h4>Connections</h4>
       <div class="palette">
         <div class="chip draggable" draggable="true" data-type="conn" data-rot="90"><div class="conn-rect"></div><span>90°</span></div>
         <div class="chip draggable" draggable="true" data-type="conn" data-rot="0"><div class="conn-bar"></div><span>0°</span></div>
@@ -40,7 +40,7 @@
     </div>
 
     <div class="section">
-      <h4>Formato do ambientes</h4>
+      <h4>Environment Shapes</h4>
       <div class="palette formats">
         <div class="chip draggable" draggable="true" data-type="module" data-shape="hex">
           <div class="hex">
@@ -53,7 +53,7 @@
           </div>
         </div>
       </div>
-      <div class="student">Nome do Aluno<br><span class="student-ip">IP da Sala</span></div>
+      <div class="student">Student Name<br><span class="student-ip">Room IP</span></div>
     </div>
   </aside>
 
@@ -61,8 +61,8 @@
   <main class="panel board-wrap">
     <div id="board" class="board" tabindex="0"></div>
     <div class="board-tools">
-      <button id="btn-clear" class="botao" title="Limpar módulo desta peça">Limpar módulo</button>
-      <button id="btn-remove" class="botao" title="Excluir peça selecionada">Excluir peça</button>
+      <button id="btn-clear" class="botao" title="Clear module from this piece">Clear module</button>
+      <button id="btn-remove" class="botao" title="Delete selected piece">Delete piece</button>
       
       {% if false %}{% endif %}
     </div>
@@ -70,69 +70,69 @@
 
   <!-- DIREITA -->
   <aside class="panel">
-    <div class="section"><h4>Função dos ambientes</h4></div>
+    <div class="section"><h4>Environment Functions</h4></div>
     <div id="moduleList" class="mod-list">
       {% set labels = {
-        'suporte': 'Módulo Suporte à Vida',
-        'habitacional': 'Habitacional Privado',
-        'refeicoes': 'Alimentação e Refeições',
-        'medico': 'Médico',
-        'exercicios': 'Exercícios',
-        'trabalho': 'Trabalho e Pesquisa',
-        'armazenamento': 'Armazenamento',
-        'sanitario': 'Sanitário e Higiene',
-        'blindagem': 'Blindagem/Proteção',
-        'inflavel': 'Inflável Expansível',
+        'suporte': 'Life Support Module',
+        'habitacional': 'Private Habitat',
+        'refeicoes': 'Food and Meals',
+        'medico': 'Medical',
+        'exercicios': 'Exercise',
+        'trabalho': 'Work and Research',
+        'armazenamento': 'Storage',
+        'sanitario': 'Sanitation and Hygiene',
+        'blindagem': 'Shielding/Protection',
+        'inflavel': 'Expandable Inflatable',
         'airlock': 'Airlock',
-        'tesserae': 'Estrutural Modular (TESSERAE)',
-        'cultura': 'Cultura e Lazer',
-        'robotico': 'Robótico Const./Manut.',
-        'hidroponia': 'Produção de Alimentos',
-        'controle': 'Controle e Comunicação',
-        'multifuncional': 'Módulo Multifuncional',
-        'imp3d': 'Impressão 3D/Manufatura'
+        'tesserae': 'Structural Modular (TESSERAE)',
+        'cultura': 'Culture and Leisure',
+        'robotico': 'Robotics Construction/Maintenance',
+        'hidroponia': 'Food Production',
+        'controle': 'Control and Communication',
+        'multifuncional': 'Multifunctional Module',
+        'imp3d': '3D Printing/Manufacturing'
       } %}
       {% if modulos_permitidos and modulos_permitidos|length > 0 %}
         {% for key in modulos_permitidos %}
           <button class="mod" data-mod="{{ key }}"><span class="sw"></span>{{ labels.get(key, key) }}</button>
         {% endfor %}
       {% else %}
-        <div class="hint">Nenhum módulo disponível: selecione na etapa anterior.</div>
+        <div class="hint">No modules available: select them in the previous step.</div>
       {% endif %}
     </div>
-    <div id="total-counter" class="hint">Módulos no tabuleiro: 0 / {{ max_modulos|default(0) }}</div>
-    <div id="score-counter" class="hint">Pontuação do Habitat: 0</div>
+    <div id="total-counter" class="hint">Modules on board: 0 / {{ max_modulos|default(0) }}</div>
+    <div id="score-counter" class="hint">Habitat Score: 0</div>
     <div class="hint">
-      • Arraste **conexões** e **formatos** para o tabuleiro.<br>
-      • **Clique** em um módulo à direita para aplicar a **imagem do módulo** na peça **selecionada**.<br>
-      • Dica: pressione **DEL** para remover a peça selecionada.
+      • Drag **connections** and **shapes** to the board.<br>
+      • **Click** a module on the right to apply the **module image** to the **selected** piece.<br>
+      • Tip: press **DEL** to remove the selected piece.
     </div>
     <div class="section">
-      <h4>Ordem Lógica de Conexão</h4>
+      <h4>Logical Connection Order</h4>
       <div class="hint">
-        Por que seguir as instruções de conexão?<br>
-        Ao chegar, a montagem correta dos habitats garante um ambiente seguro e funcional. Cada conexão tem um motivo: algumas partes são compatíveis, outras não. Seguir a lógica evita falhas e melhora a eficiência operacional.
+        Why follow connection instructions?<br>
+        Upon arrival, correct habitat assembly ensures a safe and functional environment. Each connection has a purpose: some parts are compatible, others are not. Following the logic prevents failures and improves operational efficiency.
       </div>
       <div class="hint tight">
-        Ordem sugerida para montar o habitat:
-        <br>1) Conectar <strong>Suporte à Vida</strong>
-        <br>2) Integrar <strong>Habitacional</strong>
-        <br>3) Acoplar <strong>Sanitário</strong>
-        <br>4) Adicionar <strong>Alimentação/Refeições</strong>
-        <br>5) Preparar <strong>Airlock</strong> para EVAs
-        <br>6) Completar com <strong>Armazenamento</strong>, <strong>Pesquisa/Trabalho</strong>, <strong>Exercícios</strong>, <strong>Hidroponia</strong> e <strong>Impressão 3D</strong>
+        Suggested order to assemble the habitat:
+        <br>1) Connect <strong>Life Support</strong>
+        <br>2) Integrate <strong>Habitat</strong>
+        <br>3) Attach <strong>Sanitation</strong>
+        <br>4) Add <strong>Food/Meals</strong>
+        <br>5) Prepare the <strong>Airlock</strong> for EVAs
+        <br>6) Complete with <strong>Storage</strong>, <strong>Research/Work</strong>, <strong>Exercise</strong>, <strong>Hydroponics</strong> and <strong>3D Printing</strong>
       </div>
       <div class="hint tight">
-        Compatibilidade básica de conexões:
-        <br>• <strong>Suporte à Vida</strong> deve estar ligado a Habitacional, Sanitário e Alimentação.
-        <br>• <strong>Airlock</strong> conecta-se ao módulo estrutural próximo (hex/pent) e deve ter acesso livre.
-        <br>• <strong>Sanitário</strong> e <strong>Hidroponia</strong> compartilham recursos de água.
-        <br>• <strong>Impressão 3D</strong> e <strong>Armazenamento</strong> operam melhor em proximidade.
-        <br>• <strong>Blindagem</strong> integra-se com <strong>Inflável</strong> ou <strong>Estrutural (TESSERAE)</strong>.
-        <br>• <strong>Controle</strong> sobrepõe-se a <strong>Trabalho/Pesquisa</strong> para operações.
-        <br>• <strong>Robótico</strong> trabalha melhor próximo de <strong>Armazenamento</strong> ou <strong>Trabalho/Pesquisa</strong>.
-        <br>• <strong>Cultura e Lazer</strong> integra-se com <strong>Habitacional</strong>, <strong>Inflável</strong> ou <strong>Trabalho/Pesquisa</strong>.
-        <br>• <strong>Multifuncional</strong> recomenda base <strong>Habitacional</strong> para conforto.
+        Basic connection compatibility:
+        <br>• <strong>Life Support</strong> should connect to Habitat, Sanitation and Food.
+        <br>• <strong>Airlock</strong> connects to the nearby structural module (hex/pent) and must have free access.
+        <br>• <strong>Sanitation</strong> and <strong>Hydroponics</strong> share water resources.
+        <br>• <strong>3D Printing</strong> and <strong>Storage</strong> operate best in proximity.
+        <br>• <strong>Shielding</strong> integrates with <strong>Inflatable</strong> or <strong>Structural (TESSERAE)</strong>.
+        <br>• <strong>Control</strong> overlaps <strong>Work/Research</strong> for operations.
+        <br>• <strong>Robotics</strong> works best near <strong>Storage</strong> or <strong>Work/Research</strong>.
+        <br>• <strong>Culture and Leisure</strong> integrates with <strong>Habitat</strong>, <strong>Inflatable</strong> or <strong>Work/Research</strong>.
+        <br>• <strong>Multifunctional</strong> recommends a <strong>Habitat</strong> base for comfort.
       </div>
     </div>
   </aside>
@@ -268,11 +268,11 @@ document.getElementById('moduleList').addEventListener('click', (e)=>{
   const btn = e.target.closest('.mod');
   if(!btn) return;
   if(!currentSelection){
-    alert('Selecione um módulo no tabuleiro para aplicar a imagem.');
+        alert('Select a module on the board to apply the image.');
     return;
   }
   if(currentSelection.dataset.kind!=='module'){
-    alert('A imagem só pode ser aplicada em um módulo (hexágono/pentágono).');
+        alert('The image can only be applied to one module (hexagon/pentagon).');
     return;
   }
   // Validações de ordem e compatibilidade básicas
@@ -291,7 +291,7 @@ document.getElementById('moduleList').addEventListener('click', (e)=>{
   if (usadosDoTipo >= maxPorTipo) {
     const nome = (btn.textContent || key);
     if (maxPorTipo === 0) {
-      alert('"' + nome + '" não foi levado na missão. Volte e selecione este módulo para utilizá-lo aqui.');
+        alert('"' + nome + '" was not taken on the mission. Go back and select this module to use it here.');
     } else if (maxPorTipo === 1) {
       alert('Você levou apenas 1 unidade de "' + nome + '". Remova a existente para trocar.');
     } else {
@@ -358,7 +358,7 @@ window.addEventListener('keydown', (e)=>{
 
 /* ---------- Limpar módulo da peça selecionada ---------- */
 document.getElementById('btn-clear').addEventListener('click', ()=>{
-  if(!currentSelection){ alert('Selecione uma peça para limpar o módulo.'); return; }
+    if(!currentSelection){ alert('Select a tile to clear the module.'); return; }
   if(currentSelection.dataset.kind!=='module'){ alert('A limpeza se aplica apenas a peças de módulo.'); return; }
   const img = currentSelection.querySelector('img.icon');
   if(img){ img.src=''; img.alt=''; }
@@ -368,7 +368,7 @@ document.getElementById('btn-clear').addEventListener('click', ()=>{
 
 /* ---------- Excluir peça selecionada via botão ---------- */
 document.getElementById('btn-remove').addEventListener('click', ()=>{
-  if(!currentSelection){ alert('Selecione uma peça para excluir.'); return; }
+    if(!currentSelection){ alert('Select a tile to delete.'); return; }
   currentSelection.remove(); currentSelection=null;
   updateBadges();
   updateTotal();
@@ -416,7 +416,7 @@ function updateBadges(){
 function updateTotal(){
   const total = document.querySelectorAll('.piece[data-kind="module"]').length;
   const el = document.getElementById('total-counter');
-  if(el){ el.textContent = `Módulos no tabuleiro: ${total} / ${MAX_MODULOS}`; }
+  if(el){ el.textContent = `Modules on board: ${total} / ${MAX_MODULOS}`; }
 }
 
 /* ---------- Pontuação e prontidão para finalizar ---------- */
@@ -515,8 +515,8 @@ function updateReadyAndScore(){
   if(btn){
     btn.disabled = !ready;
     let title = 'Monte seu habitat (mínimo: Suporte + Habitacional + 1 conexão)';
-    if (DESTINO === 'marte') title += ' + Módulo Médico';
-    if (DESTINO === 'exoplaneta') title += ' + Blindagem + Controle + Hidroponia + 2 conexões';
+if (DESTINO === 'marte') title += ' + Medical Module';
+if (DESTINO === 'exoplaneta') title += ' + Shielding + Control + Hydroponics + 2 connections';
     btn.title = ready ? 'Pronto para finalizar' : title;
   }
 }
@@ -526,8 +526,8 @@ document.getElementById('finalizarForm').addEventListener('submit', (e)=>{
   if(!isHabitatReady()){
     e.preventDefault();
     let msg = 'Monte seu habitat antes de finalizar. Mínimo: Suporte à Vida + Habitacional + 1 conexão.';
-    if (DESTINO === 'marte') msg += ' Requisito adicional: Módulo Médico.';
-    if (DESTINO === 'exoplaneta') msg += ' Requisitos adicionais: Blindagem + Controle + Hidroponia + 2 conexões.';
+if (DESTINO === 'marte') msg += ' Additional requirement: Medical Module.';
+if (DESTINO === 'exoplaneta') msg += ' Additional requirements: Shielding + Control + Hydroponics + 2 connections.';
     alert(msg);
     return;
   }

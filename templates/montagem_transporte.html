@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Montagem do Transporte</title>
+    <title>Transport Assembly</title>
     <link
       rel="stylesheet"
     href="{{ url_for('static', filename='css/style.css') }}"
@@ -13,8 +13,10 @@
       <img class="brand-logo" src="{{ url_for('static', filename='imagens/Group 3.png') }}" alt="Cosmo Casa logo">
     </header>
     <div class="container-grande">
-      <h2 id = texto-Montagem>Missão: {{ destino.capitalize() }}</h2>
-      <h3>Escolha sua Nave de Transporte</h3>
+      {% set destino_en_map = {'lua': 'Moon', 'marte': 'Mars', 'exoplaneta': 'Exoplanet'} %}
+      {% set destino_display = destino_en_map.get(destino.lower(), destino.capitalize()) %}
+      <h2 id = texto-Montagem>Mission: {{ destino_display }}</h2>
+      <h3>Choose Your Transport Vehicle</h3>
 
       <div class="naves-container naves-nowrap">
         {% for id, nave in naves.items() %}
@@ -23,12 +25,12 @@
           <img class="nave-imagem-placeholder" src="{{ url_for('static', filename='imagens/' + nave.imagem) }}" alt="{{ nave.nome }}">
           <p class="nave-descricao">{{ nave.descricao }}</p>
           <div class="nave-stats">
-            <strong>Operador:</strong> {{ nave.operador }}<br />
-            <strong>Capacidade (LEO/GTO):</strong> {{ nave.capacidade_carga }}
+            <strong>Operator:</strong> {{ nave.operador }}<br />
+            <strong>Capacity (LEO/GTO):</strong> {{ nave.capacidade_carga }}
             ton<br />
-            <strong>Perfil da Missão:</strong> {{ nave.perfil_missao }}
+            <strong>Mission Profile:</strong> {{ nave.perfil_missao }}
           </div>
-          <a href="{{ url_for('professor.professor_registrar_desafio', destino=destino, nave_id=id, codigo_sala=codigo_sala) }}" class="botao">Selecionar</a>
+          <a href="{{ url_for('professor.professor_registrar_desafio', destino=destino, nave_id=id, codigo_sala=codigo_sala) }}" class="botao">Select</a>
         </div>
         {% endfor %}
       </div>

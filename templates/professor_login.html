@@ -27,15 +27,15 @@
                     <input type="text" id="usuario" name="usuario" placeholder="Seu nome">
                 </div>
                 <div class="form-row">
-                    <label for="senha">Senha</label>
-                    <input type="password" id="senha" name="senha" placeholder="Digite a senha">
+                    <label for="senha">Password</label>
+                    <input type="password" id="senha" name="senha" placeholder="Enter the password">
                 </div>
                 <div class="form-row">
-                    <button type="submit" class="botao">Entrar</button>
+                    <button type="submit" class="botao">Sign In</button>
                 </div>
             </form>
-            <p class="login-help">Dica: configure a variável de ambiente <code>PROFESSOR_PASSWORD</code> para definir a senha. Valor padrão: <code>professor</code>.</p>
-            <p><a href="{{ url_for('index') }}" class="botao">Voltar para Home</a></p>
+            <p class="login-help">Tip: set the environment variable <code>PROFESSOR_PASSWORD</code> to define the password. Default: <code>professor</code>.</p>
+            <p><a href="{{ url_for('index') }}" class="botao">Back to Home</a></p>
         </div>
     </div>
 </body>

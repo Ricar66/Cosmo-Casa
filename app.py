@@ -209,64 +209,64 @@ def calcular_carga_maxima_para_destino(nave, destino, distancia_destino):
     
     return capacidade_nominal * fator_reducao
 
-# --- BANCO DE DADOS DOS MÓDULOS (com imagens e observações para tooltips) ---
+# --- HABITAT MODULES DATABASE (with images and tooltips) ---
 MODULOS_HABITAT = {
-    'suporte_vida': {"nome": "Suporte à Vida", "massa": 800, "energia": 15, "agua": 50, 
-                     "imagem": "suporte_vida.svg", "obs": "Essencial. Conecta-se ao Habitacional, Sanitário e Produção de Alimentos."},
-    'habitacional': {"nome": "Habitacional Privado", "massa": 200, "energia": 1, "agua": 5, 
-                     "imagem": "Privado.svg", "obs": "Acomodações para a tripulação. Pode ser integrado com Lazer."},
-    'alimentacao': {"nome": "Alimentação e Refeições", "massa": 300, "energia": 3, "agua": 20, 
-                    "imagem": "Cultura.svg", "obs": "Área de preparo e consumo de alimentos."},
-    'medico': {"nome": "Módulo Médico", "massa": 250, "energia": 2, "agua": 5, 
-               "imagem": "Medicina.svg", "obs": "Para emergências médicas e monitoramento da saúde da tripulação."},
-    'exercicios': {"nome": "Exercícios", "massa": 400, "energia": 5, "agua": 2, 
-                   "imagem": "Exercicio.svg", "obs": "Equipamentos para mitigar a perda de massa muscular e óssea."},
-    'pesquisa': {"nome": "Trabalho e Pesquisa", "massa": 350, "energia": 4, "agua": 2, 
-                 "imagem": "Pesquisa.svg", "obs": "Laboratório para condução de experimentos científicos."},
-    'armazenamento': {"nome": "Armazenamento", "massa": 150, "energia": 0.5, "agua": 0, 
-                      "imagem": "Armazenagem.svg", "obs": "Estoque de suprimentos, ferramentas e amostras."},
-    'sanitario': {"nome": "Sanitário e Higiene", "massa": 250, "energia": 2, "agua": 30, 
-                  "imagem": "Sanitário.svg", "obs": "Banheiro, chuveiro e sistemas de reciclagem de água."},
-    'inflavel': {"nome": "Inflável Expansível", "massa": 500, "energia": 2, "agua": 5, 
-                 "imagem": "Inflavel.svg", "obs": "Módulo de grande volume quando inflado, altamente versátil."},
-    'airlock': {"nome": "Airlock", "massa": 300, "energia": 2, "agua": 2, 
-                "imagem": "AirLock.svg", "obs": "Câmara de descompressão para atividades extraveiculares (EVAs)."},
-    'hidroponia': {"nome": "Produção de Alimentos (Hidroponia)", "massa": 500, "energia": 8, "agua": 40, 
-                   "imagem": "Hidroponia.svg", "obs": "Cultivo de plantas em ambiente controlado para suplementar a dieta."},
-    'impressao3d': {"nome": "Impressão 3D/Manufatura", "massa": 300, "energia": 5, "agua": 2, 
-                    "imagem": "Impressora.svg", "obs": "Fabricação de peças de reposição e ferramentas sob demanda."}
+    'suporte_vida': {"nome": "Life Support", "massa": 800, "energia": 15, "agua": 50,
+                     "imagem": "suporte_vida.svg", "obs": "Essential. Connects to Housing, Sanitation, and Food Production."},
+    'habitacional': {"nome": "Private Quarters", "massa": 200, "energia": 1, "agua": 5,
+                     "imagem": "Privado.svg", "obs": "Crew accommodations. Can be integrated with Leisure."},
+    'alimentacao': {"nome": "Food and Meals", "massa": 300, "energia": 3, "agua": 20,
+                    "imagem": "Cultura.svg", "obs": "Area for food preparation and consumption."},
+    'medico': {"nome": "Medical Module", "massa": 250, "energia": 2, "agua": 5,
+               "imagem": "Medicina.svg", "obs": "For medical emergencies and crew health monitoring."},
+    'exercicios': {"nome": "Exercise", "massa": 400, "energia": 5, "agua": 2,
+                   "imagem": "Exercicio.svg", "obs": "Equipment to mitigate muscle and bone loss."},
+    'pesquisa': {"nome": "Work and Research", "massa": 350, "energia": 4, "agua": 2,
+                 "imagem": "Pesquisa.svg", "obs": "Laboratory for conducting scientific experiments."},
+    'armazenamento': {"nome": "Storage", "massa": 150, "energia": 0.5, "agua": 0,
+                      "imagem": "Armazenagem.svg", "obs": "Stock of supplies, tools, and samples."},
+    'sanitario': {"nome": "Sanitation and Hygiene", "massa": 250, "energia": 2, "agua": 30,
+                  "imagem": "Sanitário.svg", "obs": "Bathroom, shower, and water recycling systems."},
+    'inflavel': {"nome": "Expandable Inflatable", "massa": 500, "energia": 2, "agua": 5,
+                 "imagem": "Inflavel.svg", "obs": "Large-volume module when inflated, highly versatile."},
+    'airlock': {"nome": "Airlock", "massa": 300, "energia": 2, "agua": 2,
+                "imagem": "AirLock.svg", "obs": "Depressurization chamber for extravehicular activities (EVAs)."},
+    'hidroponia': {"nome": "Food Production (Hydroponics)", "massa": 500, "energia": 8, "agua": 40,
+                   "imagem": "Hidroponia.svg", "obs": "Growing plants in a controlled environment to supplement the diet."},
+    'impressao3d': {"nome": "3D Printing/Manufacturing", "massa": 300, "energia": 5, "agua": 2,
+                    "imagem": "Impressora.svg", "obs": "Manufacturing spare parts and tools on demand."}
 }
 
-# --- BANCO DE DADOS DE EVENTOS ALEATÓRIOS ---
+# --- RANDOM EVENTS DATABASE ---
 EVENTOS_ALEATORIOS = [
     {
-        "nome": "Tempestade Solar",
-        "descricao": "Uma onda de radiação atinge a nave. Módulos com baixa blindagem podem sofrer avarias.",
+        "nome": "Solar Storm",
+        "descricao": "A radiation wave hits the spacecraft. Modules with low shielding may suffer damage.",
         "efeito": "risco_avaria_modulo"
     },
     {
-        "nome": "Falha Mecânica Menor",
-        "descricao": "Um subsistema apresenta uma pequena falha, consumindo recursos extras para reparo e causando um pequeno atraso.",
+        "nome": "Minor Mechanical Failure",
+        "descricao": "A subsystem experiences a minor failure, consuming extra resources for repair and causing a slight delay.",
         "efeito": "atraso_e_consumo_extra"
     },
     {
-        "nome": "Impacto de Micrometeoroide",
-        "descricao": "Pequenos detritos espaciais colidem com o casco. A blindagem da nave é testada.",
+        "nome": "Micrometeoroid Impact",
+        "descricao": "Small space debris collides with the hull. The spacecraft's shielding is tested.",
         "efeito": "risco_perda_carga"
     },
     {
-        "nome": "Surto de Energia",
-        "descricao": "Uma flutuação nos sistemas de energia força um desvio de recursos para estabilização.",
+        "nome": "Power Surge",
+        "descricao": "A fluctuation in the power systems forces resource diversion for stabilization.",
         "efeito": "consumo_extra"
     },
     {
-        "nome": "Tudo Calmo",
-        "descricao": "A viagem prossegue sem incidentes. A equipe aproveita a calmaria para verificar os sistemas.",
+        "nome": "All Calm",
+        "descricao": "The journey proceeds without incidents. The crew uses the calm to check systems.",
         "efeito": "nenhum"
     },
     {
-        "nome": "Navegação Otimizada",
-        "descricao": "A equipe de voo encontra uma trajetória mais eficiente, economizando propelente e adiantando levemente a chegada.",
+        "nome": "Optimized Navigation",
+        "descricao": "The flight team finds a more efficient trajectory, saving propellant and slightly advancing arrival.",
         "efeito": "bonus_economia"
     }
 ]
@@ -287,27 +287,27 @@ def tela_selecao():
     """Tela de seleção com imagens da NASA e fallback local garantido."""
     missoes = {
         'lua': {
-            'nome': 'Lua',
+            'nome': 'Moon',
             # Tenta buscar na NASA, se falhar, o valor será None
             'imagem_nasa': buscar_imagem_nasa('apollo moon landing'),
             # URL local garantida
             'imagem_local': url_for('static', filename='imagens/Lua.png'),
-            'descricao': 'A porta de entrada para a exploração espacial. Um ambiente conhecido, ideal para testar novos habitats e tecnologias com menor risco.',
-            'stats': {'Distância': '384.400 km', 'Duração Estimada': 'Curta (15 turnos)', 'Riscos': 'Baixos'}
+            'descricao': 'The gateway to space exploration. A familiar environment, ideal for testing new habitats and technologies with lower risk.',
+            'stats': {'Distance': '384,400 km', 'Estimated Duration': 'Short (15 turns)', 'Risks': 'Low'}
         },
         'marte': {
-            'nome': 'Marte',
+            'nome': 'Mars',
             # 'imagem_nasa': buscar_imagem_nasa('planet mars'),
             'imagem_local': url_for('static', filename='imagens/Marte.png'),
-            'descricao': 'O próximo grande salto da humanidade. Enfrente tempestades de poeira e um ambiente hostil em uma missão de longa duração.',
-            'stats': {'Distância': '225 milhões km', 'Duração Estimada': 'Longa (60 turnos)', 'Riscos': 'Elevados'}
+            'descricao': 'The next big leap for humanity. Face dust storms and a hostile environment in a long-duration mission.',
+            'stats': {'Distance': '225 million km', 'Estimated Duration': 'Long (60 turns)', 'Risks': 'High'}
         },
         'exoplaneta': {
-            'nome': 'Exoplaneta',
+            'nome': 'Exoplanet',
             'imagem_nasa': buscar_imagem_nasa('Kepler telescope exoplanet concept'),
             'imagem_local': url_for('static', filename='imagens/Exoplaneta.png'),
-            'descricao': 'Uma jornada para as estrelas em busca de um novo lar. Desafios desconhecidos e extremos aguardam no primeiro habitat interestelar.',
-            'stats': {'Distância': '500 anos-luz', 'Duração Estimada': 'Extrema (250 turnos)', 'Riscos': 'Desconhecidos'}
+            'descricao': 'A journey to the stars in search of a new home. Unknown and extreme challenges await in the first interstellar habitat.',
+            'stats': {'Distance': '500 light-years', 'Estimated Duration': 'Extreme (250 turns)', 'Risks': 'Unknown'}
         }
     }
     return render_template('selecao.html', missoes=missoes, codigo_sala=request.args.get('codigo_sala'))

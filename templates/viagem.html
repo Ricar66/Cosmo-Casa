@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Relatório de Viagem</title>
+    <title>Mission Log</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body class="conteudo-centralizado">
@@ -12,15 +12,17 @@
     <div class="container-grande">
         <div class="mb-10">
             {% if session.get('missao_destino') and session.get('viagem_nave_id') %}
-                <a href="{{ url_for('missao.selecao_modulos', destino=session.get('missao_destino'), nave_id=session.get('viagem_nave_id')) }}" class="botao">Voltar</a>
+                <a href="{{ url_for('missao.selecao_modulos', destino=session.get('missao_destino'), nave_id=session.get('viagem_nave_id')) }}" class="botao">Back</a>
             {% else %}
-                <a href="{{ url_for('tela_selecao') }}" class="botao">Voltar</a>
+                <a href="{{ url_for('tela_selecao') }}" class="botao">Back</a>
             {% endif %}
         </div>
-        <h2>Diário de Bordo da Missão</h2>
+        <h2>Mission Log</h2>
+        {% set destino_en_map = {'lua': 'Moon', 'marte': 'Mars', 'exoplaneta': 'Exoplanet'} %}
+        {% set destino_display = destino_en_map.get(destino.lower(), destino.capitalize()) %}
         <div class="info-nave">
-            <span>Destino: <strong>{{ destino.capitalize() }}</strong></span>
-            <span>Nave: <strong>{{ nave.nome }}</strong></span>
+            <span>Destination: <strong>{{ destino_display }}</strong></span>
+            <span>Spacecraft: <strong>{{ nave.nome }}</strong></span>
         </div>
 
         <div class="diario-container" id="diario-container-realtime">
@@ -28,15 +30,15 @@
 
         <div id="resultado-final-container" style="display: none;">
             <div class="sumario-chegada">
-                <h3>Condição da Carga na Chegada</h3>
+                <h3>Cargo Condition Upon Arrival</h3>
                 <ul>
                 {% for id, modulo in modulos.items() %}
                     <li>
                         {{ modulo.nome }} - 
                         {% if modulo.status == 'Avariado' %}
-                            <strong class="status-avariado">AVARIADO</strong>
+                            <strong class="status-avariado">DAMAGED</strong>
                         {% else %}
-                            <strong class="status-ok">OPERACIONAL</strong>
+                            <strong class="status-ok">OPERATIONAL</strong>
                         {% endif %}
                     </li>
                 {% endfor %}
@@ -45,11 +47,11 @@
             
             <div class="resultado-viagem mt-16">
                 {% if chegada_ok %}
-                    <p><strong>Sucesso:</strong> Você alcançou o destino com a carga essencial. Pontuação: <strong>{{ pontuacao }}</strong></p>
-                    <a href="{{ url_for('missao.habitat') }}" class="botao">Montar Habitat</a>
+                    <p><strong>Success:</strong> You reached the destination with the essential cargo. Score: <strong>{{ pontuacao }}</strong></p>
+                    <a href="{{ url_for('missao.habitat') }}" class="botao">Build Habitat</a>
                 {% else %}
-                    <p><strong>Game Over:</strong> A missão não chegou ao destino com condições suficientes. Pontuação: <strong>{{ pontuacao }}</strong></p>
-                    <a href="{{ url_for('missao.game_over') }}" class="botao alerta">Ver Detalhes do Game Over</a>
+                    <p><strong>Game Over:</strong> The mission did not reach the destination with sufficient conditions. Score: <strong>{{ pontuacao }}</strong></p>
+                    <a href="{{ url_for('missao.game_over') }}" class="botao alerta">View Game Over Details</a>
                 {% endif %}
             </div>
         </div>
@@ -90,11 +92,11 @@
                         if (eventData.evento.icone) {
                             // Constrói a URL para o ícone (ex: /icons/solar-storm.svg)
                             const iconUrl = `{{ url_for('missao.icons', filename='') }}${eventData.evento.icone}`;
-                            iconHtml = `<img class="evento-icone" src="${iconUrl}" alt="Ícone do evento">`;
+                            iconHtml = `<img class="evento-icone" src="${iconUrl}" alt="Event icon">`;
                         }
 
                         eventElement.innerHTML = `
-                            <span class="turno">Turno ${eventData.turno}</span>
+                            <span class="turno">Turn ${eventData.turno}</span>
                             <div class="evento">
                                 ${iconHtml}
                                 <h4>${eventData.evento.nome}</h4>
@@ -115,13 +117,13 @@
 
                 // O que fazer em caso de erro de conexão
                 ws.onerror = function(error) {
-                    console.error("Erro no WebSocket:", error);
-                    diarioContainer.innerHTML = "<div class='diario-entrada'><p class='status-avariado' style='text-align: center;'><strong>Falha na conexão com o simulador.</strong><br>Verifique se o terminal com 'websocket_server.py' está rodando e recarregue a página.</p></div>";
+                    console.error("WebSocket error:", error);
+                    diarioContainer.innerHTML = "<div class='diario-entrada'><p class='status-avariado' style='text-align: center;'><strong>Connection to simulator failed.</strong><br>Check if 'websocket_server.py' is running and reload the page.</p></div>";
                 };
 
             } catch (e) {
-                console.error("Não foi possível criar o WebSocket:", e);
-                diarioContainer.innerHTML = "<div class='diario-entrada'><p class='status-avariado' style='text-align: center;'>Seu navegador não suporta WebSockets ou houve um erro de script.</p></div>";
+                console.error("Could not create WebSocket:", e);
+                diarioContainer.innerHTML = "<div class='diario-entrada'><p class='status-avariado' style='text-align: center;'>Your browser does not support WebSockets or a script error occurred.</p></div>";
             }
         });
     </script>

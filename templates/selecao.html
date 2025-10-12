@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Seleção de Missão</title>
+    <title>Mission Selection</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body class="conteudo-centralizado">
@@ -11,13 +11,13 @@
     </header>
 
     <div class="container-grande">
-        <h2>Escolha seu Destino</h2>
+        <h2>Choose Your Destination</h2>
         
         <div class="toolbar-header mt-8 mb-8">
             <div></div>
             <div class="toolbar-row">
-                <a href="{{ url_for('aluno.aluno_entrar') }}" class="botao">Finalizar o Game</a>
-                <a href="{{ url_for('missao.ranking_rodada') }}" class="botao">Ver Ranking</a>
+                <a href="{{ url_for('aluno.aluno_entrar') }}" class="botao">Finish Game</a>
+                <a href="{{ url_for('missao.ranking_rodada') }}" class="botao">View Ranking</a>
             </div>
         </div>
 
@@ -31,7 +31,7 @@
                     <img 
                         class="nave-imagem-placeholder" 
                         src="{{ dados.imagem_nasa or dados.imagem_local }}"
-                        alt="Missão para {{ dados.nome }}" 
+                        alt="Mission to {{ dados.nome }}" 
                         loading="lazy" 
                         decoding="async" 
                         onerror="this.onerror=null; this.src='{{ dados.imagem_local }}';">
@@ -45,7 +45,7 @@
                     {% endfor %}
                 </div>
                 
-                <a href="{{ url_for('missao.montagem_transporte', destino=id, codigo_sala=codigo_sala) }}" class="botao">Analisar Transporte</a>
+                <a href="{{ url_for('missao.montagem_transporte', destino=id, codigo_sala=codigo_sala) }}" class="botao">Analyze Transport</a>
             </div>
             {% endfor %}
 

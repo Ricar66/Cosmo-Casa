@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Game Over - Missão</title>
+    <title>Game Over - Mission</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body class="conteudo-centralizado">
@@ -11,24 +11,24 @@
     </header>
     <div class="container-grande">
         <h2>Game Over</h2>
-        <p>A missão não alcançou o destino com condições suficientes. A montagem do Habitat está bloqueada por segurança.</p>
+        <p>The mission did not reach the destination with sufficient conditions. Habitat assembly is blocked for safety.</p>
 
         <div class="sumario-chegada">
-            <h3>Resumo da Missão</h3>
+            <h3>Mission Summary</h3>
             <div>
-                <span>Destino: <strong>{{ session.get('missao_destino')|default('—')|capitalize }}</strong></span>
-                <span style="margin-left:12px">Nave: <strong>{{ session.get('missao_nave')|default('—') }}</strong></span>
-                <span style="margin-left:12px">Pontuação: <strong>{{ session.get('missao_score')|default(0) }}</strong></span>
+                <span>Destination: <strong>{{ session.get('missao_destino')|default('—')|capitalize }}</strong></span>
+                <span style="margin-left:12px">Spacecraft: <strong>{{ session.get('missao_nave')|default('—') }}</strong></span>
+                <span style="margin-left:12px">Score: <strong>{{ session.get('missao_score')|default(0) }}</strong></span>
             </div>
         </div>
 
         {% set feedback = session.get('missao_feedback') %}
         {% if feedback %}
         <div class="sumario-chegada">
-            <h3>Por que aconteceu?</h3>
+            <h3>Why did it happen?</h3>
             <ul>
                 {% for linha in feedback.split('\n') %}
-                    {% if linha and ('Análise de Game Over' not in linha) %}
+                    {% if linha and ('Game Over Analysis' not in linha) %}
                         <li>{{ linha }}</li>
                     {% endif %}
                 {% endfor %}
@@ -37,23 +37,23 @@
         {% endif %}
 
         <div class="sumario-chegada">
-            <h3>Como melhorar na próxima tentativa</h3>
+            <h3>How to improve on the next attempt</h3>
             <ul>
-                <li>Garanta os módulos essenciais para o destino (Suporte à Vida + Habitacional; inclua Médico para Marte e Blindagem/Controle/Hidroponia para Exoplaneta).</li>
-                <li>Respeite a capacidade de carga da nave e reduza massa total quando necessário.</li>
-                <li>Evite avarias priorizando módulos de proteção e distribuição segura de recursos.</li>
-                <li>Siga a ordem lógica de montagem: Suporte à Vida → Habitacional → Sanitário/Alimentação → Airlock → demais.</li>
-                <li>Otimize conexões e organização do habitat para eficiência.</li>
+                <li>Ensure essential modules for the destination (Life Support + Habitat; include Medical for Mars and Shielding/Control/Hydroponics for Exoplanet).</li>
+                <li>Respect the spacecraft cargo capacity and reduce total mass when necessary.</li>
+                <li>Avoid damage by prioritizing protection modules and safe resource distribution.</li>
+                <li>Follow the logical assembly order: Life Support → Habitat → Sanitation/Food → Airlock → others.</li>
+                <li>Optimize connections and habitat organization for efficiency.</li>
             </ul>
         </div>
 
         <div>
             {% if session.get('missao_destino') and session.get('missao_nave') %}
-                <a href="{{ url_for('missao.selecao_modulos', destino=session.get('missao_destino'), nave_id=session.get('missao_nave'), codigo_sala=session.get('codigo_sala')) }}" class="botao">Montar Módulos</a>
+                <a href="{{ url_for('missao.selecao_modulos', destino=session.get('missao_destino'), nave_id=session.get('missao_nave'), codigo_sala=session.get('codigo_sala')) }}" class="botao">Assemble Modules</a>
             {% else %}
-                <a href="{{ url_for('tela_selecao', codigo_sala=session.get('codigo_sala')) }}" class="botao">Montar Módulos</a>
+                <a href="{{ url_for('tela_selecao', codigo_sala=session.get('codigo_sala')) }}" class="botao">Assemble Modules</a>
             {% endif %}
-            <a href="{{ url_for('missao.ranking_rodada') }}" class="botao">Ver Ranking</a>
+            <a href="{{ url_for('missao.ranking_rodada') }}" class="botao">View Ranking</a>
         </div>
     </div>
 </body>

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalhes da Sala - CosmoCasa</title>
+    <title>Room Details - CosmoCasa</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/detalhes.css') }}">
     
@@ -12,20 +12,20 @@
 <body class="conteudo-centralizado">
     <div class="main-container">
         <div class="topbar">
-            <div class="user">Bem-vindo, {{ professor_nome or 'Professor' }}</div>
+            <div class="user">Welcome, {{ professor_nome or 'Professor' }}</div>
             <div class="topbar-actions">
-                <a href="{{ url_for('professor.professor_reset_password', next=request.path) }}" class="action-btn">Trocar senha</a>
-                <a href="{{ url_for('professor.professor_logout') }}" class="action-btn danger">Sair</a>
+                <a href="{{ url_for('professor.professor_reset_password', next=request.path) }}" class="action-btn">Change password</a>
+                <a href="{{ url_for('professor.professor_logout') }}" class="action-btn danger">Logout</a>
             </div>
         </div>
         {% if must_change_admin %}
         <div class="alert-banner">
-            <div class="msg">Sua senha padrão ainda está ativa. Por segurança, troque a senha.</div>
-            <a href="{{ url_for('professor.professor_reset_password', next=request.path) }}" class="action-btn">Trocar senha</a>
+            <div class="msg">Your default password is still active. For security, please change it.</div>
+            <a href="{{ url_for('professor.professor_reset_password', next=request.path) }}" class="action-btn">Change password</a>
         </div>
         {% endif %}
         <a href="{{ url_for('professor.professor_dashboard') }}" class="back-btn">
-            &larr; Voltar ao Dashboard
+            &larr; Back to Dashboard
         </a>
         
         <header class="room-header">
@@ -50,17 +50,17 @@
                 </p>
                 {% endif %}
                 <div class="room-subtitle">
-                    <span class="room-destination">Destino: {{ sala.destino }}</span>
+                    <span class="room-destination">Destination: {{ sala.destino }}</span>
                     <div class="room-code-section">
                         <span class="botao" id="share-code">{{ sala.codigo_sala }}</span>
-                        <button class="botao" type="botao" onclick="copiarCodigo()">Compartilhar</button>
+                        <button class="botao" type="botao" onclick="copiarCodigo()">Share</button>
                     </div>
                 </div>
             </div>
             <div class="room-right">
-                <button class="botao" type="button" onclick="showTab('desafios')">Editar</button>
-                <button class="botao" type="button" onclick="showTab('alunos')">Ver Alunos</button>
-                <a class="botao" href="{{ url_for('professor.professor_sala_exportar', codigo_sala=sala.codigo_sala) }}" target="_blank" rel="noopener">Exportar</a>
+                <button class="botao" type="button" onclick="showTab('desafios')">Edit</button>
+                <button class="botao" type="button" onclick="showTab('alunos')">View Students</button>
+                <a class="botao" href="{{ url_for('professor.professor_sala_exportar', codigo_sala=sala.codigo_sala) }}" target="_blank" rel="noopener">Export</a>
             </div>
         </header>
 
@@ -69,33 +69,33 @@
                 <div class="info-card">
                     <div class="info-icon">&#x1F465;</div>
                     <span class="info-number">{{ sala.alunos|length }}</span>
-                    <span class="info-label">Alunos</span>
+                    <span class="info-label">Students</span>
                 </div>
                 
                 <div class="info-card">
                     <div class="info-icon">&#x1F680;</div>
                     <span class="info-number">{{ sala.nave_id }}</span>
-                    <span class="info-label">Nave</span>
+                    <span class="info-label">Spacecraft</span>
                 </div>
                 
                 <div class="info-card">
                     <div class="info-icon">&#x1F4DD;</div>
                     <span class="info-number">{{ sala.desafios|length }}</span>
-                    <span class="info-label">Desafios</span>
+                    <span class="info-label">Challenges</span>
                 </div>
                 
                 <div class="info-card">
                     <div class="info-icon">&#x1F4C5;</div>
                     <span class="info-number">{{ sala.data_criacao[:10] }}</span>
-                    <span class="info-label">Criação</span>
+                    <span class="info-label">Created</span>
                 </div>
             </div>
         </header>
         
         <div class="tabs">
-            <button id="tabbtn-alunos" class="botao active" onclick="showTab('alunos')">Alunos</button>
-            <button id="tabbtn-desafios" class="botao" onclick="showTab('desafios')">Desafios</button>
-            <button id="tabbtn-estatisticas" class="botao" onclick="showTab('estatisticas')">Estatísticas</button>
+            <button id="tabbtn-alunos" class="botao active" onclick="showTab('alunos')">Students</button>
+            <button id="tabbtn-desafios" class="botao" onclick="showTab('desafios')">Challenges</button>
+            <button id="tabbtn-estatisticas" class="botao" onclick="showTab('estatisticas')">Statistics</button>
         </div>
         
         <div id="tab-alunos" class="tab-content active">
@@ -105,33 +105,33 @@
                         <div class="card student-card" tabindex="0">
                             <div class="card-header">
                                 <h3 class="card-title" title="{{ aluno.nome }}">{{ aluno.nome }}</h3>
-                                <span class="card-badge">{{ aluno.precisao_pct }}% Precisão</span>
+                                <span class="card-badge">{{ aluno.precisao_pct }}% Accuracy</span>
                             </div>
                             <div class="card-content">
                                 <!-- Resumo compacto visível por padrão -->
                                 <div class="student-summary">
-                                    Tentativas: <strong>{{ aluno.tentativas }}</strong> —
-                                    Precisão: <strong>{{ aluno.precisao_pct }}%</strong> —
-                                    Pontos: <strong>{{ aluno.total }}</strong>
+                                    Attempts: <strong>{{ aluno.tentativas }}</strong> —
+                                    Accuracy: <strong>{{ aluno.precisao_pct }}%</strong> —
+                                    Points: <strong>{{ aluno.total }}</strong>
                                 </div>
                                 <!-- Conteúdo extra só aparece no hover -->
                                 <div class="reveal-on-hover">
             <div class="student-stats">
                                         <div class="student-stat">
                                             <span class="stat-value">{{ aluno.tentativas }}</span>
-                                            <span class="stat-label">Tentativas</span>
+                                            <span class="stat-label">Attempts</span>
                                         </div>
                                         <div class="student-stat">
                                             <span class="stat-value">{{ aluno.concluidos }}</span>
-                                            <span class="stat-label">Concluídos</span>
+                                            <span class="stat-label">Completed</span>
                                         </div>
                                         <div class="student-stat">
                                             <span class="stat-value">{{ aluno.precisao_pct }}%</span>
-                                            <span class="stat-label">Precisão</span>
+                                            <span class="stat-label">Accuracy</span>
                                         </div>
                                         <div class="student-stat">
                                             <span class="stat-value">{{ aluno.total }}</span>
-                                            <span class="stat-label">Pontos</span>
+                                            <span class="stat-label">Points</span>
                                         </div>
                                     </div>
                                     
@@ -143,8 +143,8 @@
             {% else %}
                 <div class="empty-state">
                     <div class="empty-icon">&#x1F465;</div>
-                    <h3>Nenhum aluno matriculado</h3>
-                    <p>Compartilhe o código da sala para que seus alunos possam entrar.</p>
+                    <h3>No students enrolled</h3>
+                    <p>Share the room code so your students can join.</p>
                 </div>
             {% endif %}
         </div>
@@ -155,8 +155,8 @@
                     {% for desafio in sala.desafios %}
                         <div class="card challenge-card">
                             <div class="card-header">
-                                <h3 class="card-title">Desafio {{ loop.index }}</h3>
-                                <span class="card-badge">Ativo</span>
+                                <h3 class="card-title">Challenge {{ loop.index }}</h3>
+                                <span class="card-badge">Active</span>
                             </div>
                             <div class="card-content">
                                 <p><strong>{{ desafio['titulo'] }}</strong></p>
@@ -166,10 +166,10 @@
                                 <form method="post" action="{{ url_for('professor.professor_excluir_desafio') }}" style="display:inline">
                                     <input type="hidden" name="codigo_sala" value="{{ sala.codigo_sala }}" />
                                     <input type="hidden" name="desafio_index" value="{{ loop.index0 }}" />
-                                    <button type="submit" class="card-btn danger">Remover</button>
+                                    <button type="submit" class="card-btn danger">Remove</button>
                                 </form>
                                 <!-- Placeholder de edição: manter botão visível -->
-                                <button class="card-btn" type="button" onclick="alert('Edição ainda não implementada nesta tela.')">Editar</button>
+                                <button class="card-btn" type="button" onclick="alert('Editing not yet implemented on this screen.')">Edit</button>
                             </div>
                         </div>
                     {% endfor %}
@@ -178,10 +178,10 @@
             {% else %}
                 <div class="empty-state">
                     <div class="empty-icon">&#x1F4DD;</div>
-                    <h3>Nenhum desafio criado</h3>
-                    <p>Crie desafios para engajar seus alunos.</p>
+                    <h3>No challenges created</h3>
+                    <p>Create challenges to engage your students.</p>
             <button class="card-btn">
-                        + Criar Primeiro Desafio
+                        + Create First Challenge
                     </button>
                 </div>
             {% endif %}
@@ -201,23 +201,23 @@
                             </div>
                             <div class="student-stat">
                                 <span class="stat-value">{{ turma_stats.tentativas_total }}</span>
-                                <span class="stat-label">Tentativas</span>
+                                <span class="stat-label">Attempts</span>
                             </div>
                             <div class="student-stat">
                                 <span class="stat-value">{{ turma_stats.concluidos_total }}</span>
-                                <span class="stat-label">Concluídos</span>
+                                <span class="stat-label">Completed</span>
                             </div>
                             <div class="student-stat">
                                 <span class="stat-value">{{ turma_stats.precisao_geral_pct }}%</span>
-                                <span class="stat-label">Precisão média</span>
+                                <span class="stat-label">Average accuracy</span>
                             </div>
                             <div class="student-stat">
                                 <span class="stat-value">{{ '%.1f'|format(turma_stats.media_pontos_aluno) }}</span>
-                                <span class="stat-label">Média pontos/aluno</span>
+                                <span class="stat-label">Average points/student</span>
                             </div>
                             <div class="student-stat">
                                 <span class="stat-value">{{ '%.2f'|format(turma_stats.media_pontos_por_tentativa) }}</span>
-                                <span class="stat-label">Pontos por tentativa</span>
+                                <span class="stat-label">Points per attempt</span>
                             </div>
                         </div>
                     </div>
@@ -225,7 +225,7 @@
 
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Desempenho por Desafio</h3>
+                        <h3 class="card-title">Performance by Challenge</h3>
                     </div>
                     <div class="card-content">
                         <ul class="list-clean">
@@ -233,13 +233,13 @@
                                 {% for d in desempenho_desafios %}
                                     <li style="margin-bottom: 8px;">
                                         <strong>{{ d.desafio_id }}</strong> — 
-                                        {{ d.tentativas }} tentativas, 
-                                        {{ d.precisao_pct }}% precisão, 
-                                        média {{ '%.1f'|format(d.media_pontuacao) }} pontos 
+                                        {{ d.tentativas }} attempts, 
+                                        {{ d.precisao_pct }}% accuracy, 
+                                        average {{ '%.1f'|format(d.media_pontuacao) }} points 
                                     </li>
                                 {% endfor %}
                             {% else %}
-                                <li>Nenhum registro de desempenho de desafios.</li>
+                                <li>No challenge performance records.</li>
                             {% endif %}
                         </ul>
                     </div>
@@ -252,7 +252,7 @@
         function showTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.getElementById('tab-' + tabName).classList.add('active');
-            // Atualizar estado ativo dos botões principais de aba
+            // Update active state of main tab buttons
             document.querySelectorAll('.tabs .botao').forEach(btn => btn.classList.remove('active'));
             const map = { alunos: 'tabbtn-alunos', desafios: 'tabbtn-desafios', estatisticas: 'tabbtn-estatisticas' };
             const btn = document.getElementById(map[tabName]);
@@ -262,17 +262,17 @@
         function copiarCodigo() {
             const codigo = document.getElementById('share-code').textContent;
             navigator.clipboard.writeText(codigo).then(() => {
-                alert('Código da sala copiado: ' + codigo);
+                alert('Room code copied: ' + codigo);
             }).catch(err => {
-                alert('Erro ao copiar o código.');
+                alert('Error copying the code.');
             });
         }
 
         function copiarLinkAluno(url) {
             navigator.clipboard.writeText(url).then(() => {
-                alert('Link copiado: ' + url);
+                alert('Link copied: ' + url);
             }).catch(err => {
-                alert('Erro ao copiar link: ' + err);
+                alert('Error copying link: ' + err);
             });
         }
 

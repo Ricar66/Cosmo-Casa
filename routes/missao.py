@@ -123,7 +123,7 @@ def selecao_modulos(destino, nave_id):
         nave_key = alias.get((nave_id or '').lower(), nave_id)
         nave_selecionada = NAVES_ESPACIAIS.get(nave_key)
         if not nave_selecionada:
-            return "Nave não encontrada!", 404
+            return "Spacecraft not found!", 404
         try:
             session['missao_etapa'] = 'selecao'
             session['missao_destino'] = destino
@@ -133,7 +133,7 @@ def selecao_modulos(destino, nave_id):
         return render_template('selecao_modulos.html', destino=destino, nave=nave_selecionada, nave_id=nave_key, modulos=MODULOS_HABITAT, codigo_sala=request.args.get('codigo_sala'))
     except Exception:
         logging.exception("Falha ao renderizar selecao_modulos")
-        return "Erro ao preparar seleção de módulos", 500
+        return "Error preparing module selection", 500
 
 
 @missao_bp.route('/viagem/<string:destino>/<string:nave_id>', methods=['POST'])
@@ -155,7 +155,7 @@ def viagem(destino, nave_id):
 
         modulos_selecionados_ids = request.form.getlist('modulos_selecionados')
         if not modulos_selecionados_ids:
-            session['erro_modulos'] = 'Selecione pelo menos um módulo antes de lançar a missão.'
+            session['erro_modulos'] = 'Select at least one module before launching the mission.'
             codigo_sala = request.args.get('codigo_sala') or request.form.get('codigo_sala')
             if codigo_sala:
                 return redirect(url_for('missao.selecao_modulos', destino=destino, nave_id=nave_key, codigo_sala=codigo_sala))
@@ -179,36 +179,36 @@ def viagem(destino, nave_id):
 
         def evento_personalizado(turno:int):
             if random.random() < (0.3 if destino != 'exoplaneta' else 0.4):
-                base = random.choice([e for e in EVENTOS_ALEATORIOS if e.get('nome') != 'Tudo Calmo'])
+                base = random.choice([e for e in EVENTOS_ALEATORIOS if e.get('nome') != 'All Calm'])
                 evt = dict(base)
                 icones_eventos = {
-                    'Tempestade Solar': 'solar-storm.svg', 'Falha Mecânica Menor': 'wrench.svg',
-                    'Impacto de Micrometeoroide': 'meteor.svg', 'Surto de Energia': 'surge.svg',
-                    'Navegação Otimizada': 'navigation.svg'
+                    'Solar Storm': 'solar-storm.svg', 'Minor Mechanical Failure': 'wrench.svg',
+                    'Micrometeoroid Impact': 'meteor.svg', 'Power Surge': 'surge.svg',
+                    'Optimized Navigation': 'navigation.svg'
                 }
                 evt['icone'] = icones_eventos.get(base['nome'], 'event-default.svg')
-                if base['nome'] == 'Tempestade Solar':
-                    evt['descricao'] += ' Sistemas de suporte mantêm níveis estáveis para a tripulação.' if 'suporte_vida' in ids_set else ' A ausência de Suporte à Vida agrava a resposta da tripulação.'
-                elif base['nome'] == 'Falha Mecânica Menor' and 'impressao3d' in ids_set:
-                    evt['descricao'] += ' A Impressão 3D fabrica uma peça de reposição e reduz o atraso.'
-                elif base['nome'] == 'Impacto de Micrometeoroide' and 'armazenamento' in ids_set:
-                    evt['descricao'] += ' A carga está bem acondicionada; danos são mínimos.'
-                elif base['nome'] == 'Surto de Energia' and 'controle' in ids_set:
-                    evt['descricao'] += ' O módulo de Controle estabiliza rapidamente os sistemas.'
-                elif base['nome'] == 'Navegação Otimizada' and 'exercicios' in ids_set:
-                    evt['descricao'] += ' A equipe em boa forma física mantém procedimentos com precisão.'
+                if base['nome'] == 'Solar Storm':
+                    evt['descricao'] += ' Life support systems maintain stable levels for the crew.' if 'suporte_vida' in ids_set else ' The absence of Life Support worsens the crew response.'
+                elif base['nome'] == 'Minor Mechanical Failure' and 'impressao3d' in ids_set:
+                    evt['descricao'] += ' 3D Printing manufactures a spare part and reduces delay.'
+                elif base['nome'] == 'Micrometeoroid Impact' and 'armazenamento' in ids_set:
+                    evt['descricao'] += ' Cargo is well stowed; damage is minimal.'
+                elif base['nome'] == 'Power Surge' and 'controle' in ids_set:
+                    evt['descricao'] += ' The Control module quickly stabilizes systems.'
+                elif base['nome'] == 'Optimized Navigation' and 'exercicios' in ids_set:
+                    evt['descricao'] += ' A physically fit crew maintains procedures with precision.'
                 return evt
             if ids_list:
                 mod_id = ids_list[(turno - 1) % len(ids_list)]
                 mod = MODULOS_HABITAT.get(mod_id, {"nome": mod_id})
-                nome_evt = f"Operação do Módulo: {mod.get('nome')}"
+                nome_evt = f"Module Operation: {mod.get('nome')}"
                 dicas = {
-                    'hidroponia': 'Produção de alimentos estabiliza moral e reduz consumo de estoque.', 'medico': 'Atendimento médico lida com indisposição leve na tripulação.',
-                    'airlock': 'EVA realizada para inspeção externa; retorno seguro ao habitat.', 'impressao3d': 'Peça fabricada para reparo rápido de um subsistema.',
-                    'sanitario': 'Sistema de reciclagem de água mantém níveis adequados.', 'armazenamento': 'Reorganização de suprimentos otimiza acesso e segurança.',
-                    'exercicios': 'Rotina de exercícios mitiga fadiga em microgravidade.', 'inflavel': 'Módulo expansível aumenta volume útil para operações.',
-                    'pesquisa': 'Experimento científico rende dados importantes da missão.', 'alimentacao': 'Refeição balanceada melhora coesão da equipe.',
-                    'habitacional': 'Descanso adequado melhora desempenho da equipe.', 'suporte_vida': 'Níveis de oxigênio e pressão se mantêm estáveis.'
+                    'hidroponia': 'Food production stabilizes morale and reduces stock consumption.', 'medico': 'Medical care addresses mild crew indisposition.',
+                    'airlock': 'EVA performed for external inspection; safe return to habitat.', 'impressao3d': 'Part manufactured for quick subsystem repair.',
+                    'sanitario': 'Water recycling system maintains adequate levels.', 'armazenamento': 'Supply reorganization optimizes access and safety.',
+                    'exercicios': 'Exercise routine mitigates microgravity fatigue.', 'inflavel': 'Expandable module increases useful volume for operations.',
+                    'pesquisa': 'Scientific experiment yields important mission data.', 'alimentacao': 'Balanced meal improves team cohesion.',
+                    'habitacional': 'Adequate rest improves team performance.', 'suporte_vida': 'Oxygen and pressure levels remain stable.'
                 }
                 icones_modulos = {
                     'hidroponia': 'plant.svg', 'medico': 'medical.svg', 'airlock': 'airlock.svg',
@@ -216,9 +216,9 @@ def viagem(destino, nave_id):
                     'exercicios': 'dumbbell.svg', 'inflavel': 'expand.svg', 'pesquisa': 'flask.svg',
                     'alimentacao': 'food.svg', 'habitacional': 'habitat.svg', 'suporte_vida': 'life-support.svg'
                 }
-                desc = dicas.get(mod_id, 'O módulo contribui positivamente para o andamento da missão.')
+                desc = dicas.get(mod_id, 'The module contributes positively to the mission progress.')
                 return {"nome": nome_evt, "descricao": desc, "efeito": "nenhum", "icone": icones_modulos.get(mod_id, 'module-default.svg')}
-            return {"nome": "Rotina Estável", "descricao": "A equipe segue procedimentos padrão enquanto sistemas operam normalmente.", "efeito": "nenhum", "icone": "calm.svg"}
+            return {"nome": "Stable Routine", "descricao": "The crew follows standard procedures while systems operate normally.", "efeito": "nenhum", "icone": "calm.svg"}
 
         for turno_atual in range(1, total_turnos + 1):
             evento = evento_personalizado(turno_atual)
@@ -264,8 +264,16 @@ def viagem(destino, nave_id):
             if destino_val == 'lua': massa_ok = (capacidade_kg == 0) or (massa_total <= capacidade_kg * 1.2)
             elif destino_val == 'marte': massa_ok = (capacidade_kg == 0) or (massa_total <= capacidade_kg)
             else: massa_ok = (capacidade_kg == 0) or (massa_total <= capacidade_kg * 0.95)
-            chegou = (len(faltantes) <= allowed_missing) and massa_ok and (avariados <= tolerancia_avarias)
-            return chegou, max(pontos, 0), massa_total, capacidade_kg
+            # Aplicar regra de pontuação mínima para habilitar montagem do Habitat
+            pontos_final = max(pontos, 0)
+            min_points_required = dificuldade_base
+            chegou = (
+                (len(faltantes) <= allowed_missing) and
+                massa_ok and
+                (avariados <= tolerancia_avarias) and
+                (pontos_final >= min_points_required)
+            )
+            return chegou, pontos_final, massa_total, capacidade_kg
 
         # Chamada da função de cálculo
         chegada_ok, pontuacao, massa_total, capacidade_kg = calcular_resultado_e_pontos(destino, nave, modulos_a_bordo, diario_de_bordo)
@@ -276,8 +284,8 @@ def viagem(destino, nave_id):
         if codigo_sala:
             try:
                 db_manager.atualizar_destino_e_nave(codigo_sala, destino, nave_key)
-                titulo = f"Missão {destino.capitalize()} — {nave['nome'] if nave else nave_id}"
-                descricao = f"Missão planejada com {len(modulos_a_bordo)} módulos selecionados."
+                titulo = f"Mission {destino.capitalize()} — {nave['nome'] if nave else nave_id}"
+                descricao = f"Mission planned with {len(modulos_a_bordo)} selected modules."
                 sala = db_manager.buscar_sala_por_codigo_any(codigo_sala)
                 if sala:
                     desafios = json.loads(sala.get('desafios_json') or '[]')
@@ -296,8 +304,12 @@ def viagem(destino, nave_id):
                 presentes = set(modulos_a_bordo.keys())
                 faltantes = list(essenciais - presentes)
                 causas = []
-                if faltantes: causas.append(f"Módulos essenciais ausentes: {', '.join(faltantes)}.")
-                session['missao_feedback'] = "\n".join(["Análise de Game Over:"] + causas)
+                if faltantes: causas.append(f"Missing essential modules: {', '.join(faltantes)}.")
+                # Verificar pontuação mínima necessária para montar o Habitat
+                min_points_required = {'lua': 50, 'marte': 120, 'exoplaneta': 300}.get(destino, 50)
+                if pontuacao < min_points_required:
+                    causas.append(f"Insufficient score to assemble habitat: required at least {min_points_required}, achieved {int(pontuacao)}.")
+                session['missao_feedback'] = "\n".join(["Game Over Analysis:"] + causas)
             except Exception:
                 logging.exception('Falha ao gerar feedback de Game Over')
         

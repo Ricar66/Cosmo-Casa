@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Entrar na Missão</title>
+  <title>Join the Mission</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <style>
     /* Garante que o gradiente cobre pelo menos a viewport */
@@ -90,8 +90,8 @@
 <body>
   <div class="page">
     <div class="container">
-      <h1>Entrar na Missão</h1>
-      <p>Digite o código da sala fornecido pelo professor e seu nome exatamente como está no arquivo.</p>
+      <h1>Join the Mission</h1>
+      <p>Enter the room code provided by the teacher and your name exactly as listed.</p>
 
     {% if erro %}
       <div class="error">{{ erro }}</div>
@@ -99,16 +99,16 @@
 
     <form method="POST">
       <div class="form-group">
-        <label for="codigo_sala">Código da Sala</label>
-        <input type="text" id="codigo_sala" name="codigo_sala" placeholder="Ex.: 8A3F2C1B" required />
+        <label for="codigo_sala">Room Code</label>
+        <input type="text" id="codigo_sala" name="codigo_sala" placeholder="e.g., 8A3F2C1B" required />
       </div>
       <div class="form-group">
-        <label for="nome_aluno">Seu Nome</label>
-        <input type="text" id="nome_aluno" name="nome_aluno" placeholder="Nome completo" required />
+        <label for="nome_aluno">Your Name</label>
+        <input type="text" id="nome_aluno" name="nome_aluno" placeholder="Full name" required />
       </div>
       <div class="actions">
-        <button type="submit" class="btn btn-primary">Iniciar Missão</button>
-        <a class="btn" href="{{ url_for('index') }}">Voltar</a>
+        <button type="submit" class="btn btn-primary">Start Mission</button>
+        <a class="btn" href="{{ url_for('index') }}">Back</a>
       </div>
     </form>
     </div>

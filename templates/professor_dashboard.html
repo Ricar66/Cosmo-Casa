@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Professor - Cosmo Casa</title>
+    <title>Professor Dashboard - Cosmo Casa</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     
@@ -15,38 +15,38 @@
     <!-- Barra separada para ações no canto superior direito -->
     <div class="topbar-actions-row">
         <div class="topbar-actions">
-            <a href="{{ url_for('professor.professor_reset_password', next=request.path) }}" class="action-btn">Trocar senha</a>
-            <a href="{{ url_for('professor.professor_logout') }}" class="action-btn danger">Sair</a>
+            <a href="{{ url_for('professor.professor_reset_password', next=request.path) }}" class="action-btn">Change password</a>
+            <a href="{{ url_for('professor.professor_logout') }}" class="action-btn danger">Logout</a>
         </div>
     </div>
 
     <!-- Barra de boas-vindas isolada -->
     <div class="topbar">
-        <div class="user">Bem-vindo, {{ professor_nome or 'Professor' }}</div>
+        <div class="user">Welcome, {{ professor_nome or 'Professor' }}</div>
     </div>
     
     <main class="dashboard-container">
         <div class="page-grid">
             <section class="actions-column">
                 <div class="dashboard-header">
-                    <h2>Dashboard do Professor</h2>
+                    <h2>Professor Dashboard</h2>
                 </div>
                 {% if must_change_admin %}
                 <div class="alert-banner">
-                    <div class="msg">Sua senha padrão ainda está ativa. Por segurança, troque a senha.</div>
-                    <a href="{{ url_for('professor.professor_reset_password', next=request.path) }}" class="action-btn">Trocar senha</a>
+                    <div class="msg">Your default password is still active. For security, please change it.</div>
+                    <a href="{{ url_for('professor.professor_reset_password', next=request.path) }}" class="action-btn">Change password</a>
                 </div>
                 {% endif %}
                 <!-- Cards de Ações Principais -->
                 <div class="dashboard-grid">
             <!-- Card de Ranking -->
             <div class="dashboard-card">
-                <h4>Ranking de Pontuações</h4>
+                <h4>Score Ranking</h4>
                 {% if ranking %}
                 <div class="ranking-list">
                     {% for item in ranking %}
                     <div class="ranking-item">
-                        <span><strong>{{ loop.index }}. {{ item.nome }}</strong>: {{ item.total }} pontos — Concluídos: {{ item.concluidos }} — Tentativas: {{ item.tentativas }}</span>
+                        <span><strong>{{ loop.index }}. {{ item.nome }}</strong>: {{ item.total }} points — Completed: {{ item.concluidos }} — Attempts: {{ item.tentativas }}</span>
                         <form method="POST" action="{{ url_for('professor.professor_excluir_aluno_ranking') }}">
                             <input type="hidden" name="aluno_id" value="{{ item.id }}" />
                             <button type="submit" class="action-btn danger">🗑️</button>
@@ -56,28 +56,28 @@
                 </div>
                 {% else %}
                 <div class="empty-state empty-state--compact">
-                    <p>Ainda não há pontuações registradas.</p>
+                    <p>No scores recorded yet.</p>
                 </div>
                 {% endif %}
             </div>
             
             <!-- Card de Criação de Sala -->
             <div class="dashboard-card">
-                <h4>Criar Nova Sala</h4>
+                <h4>Create New Room</h4>
                 <form method="POST" action="{{ url_for('professor.professor_criar_sala') }}" enctype="multipart/form-data">
                     <div class="form-group">
-                        <label for="nome_sala" class="form-label">Nome da Sala</label>
+                        <label for="nome_sala" class="form-label">Room Name</label>
                         <input type="text" id="nome_sala" name="nome_sala" class="form-input" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="lista_alunos" class="form-label">Lista de Alunos (.txt)</label>
+                        <label for="lista_alunos" class="form-label">Student List (.txt)</label>
                         <input type="file" id="lista_alunos" name="lista_alunos" accept=".txt" class="form-input" required>
-                        <small>Um aluno por linha</small>
+                        <small>One student per line</small>
                     </div>
                     
                     <button type="submit" class="action-btn success btn-block">
-                        ✨ Criar Sala
+                        ✨ Create Room
                     </button>
                 </form>
             </div>
@@ -86,7 +86,7 @@
         
         <!-- Seção de Salas -->
         <section class="salas-column">
-        <h3 class="section-title">Minhas Salas</h3>
+        <h3 class="section-title">My Rooms</h3>
         
         {% if salas %}
         <div class="salas-container">
@@ -97,45 +97,45 @@
                 </div>
                 
                 <div class="sala-code">
-                    <span><strong>Código:</strong> {{ sala.codigo }}</span>
+                    <span><strong>Code:</strong> {{ sala.codigo }}</span>
                     <button class="action-btn ml-auto btn-compact" onclick="copiarCodigo('{{ sala.codigo }}')">
-                        📋 Copiar
+                        📋 Copy
                     </button>
                 </div>
                 
                 <div class="sala-info">
                     <div class="sala-info-item">
-                        <strong>Destino:</strong> {{ sala.destino }}
+                        <strong>Destination:</strong> {{ sala.destino }}
                     </div>
                     <div class="sala-info-item">
-                        <strong>Nave:</strong> {{ sala.nave_id }}
+                        <strong>Spacecraft:</strong> {{ sala.nave_id }}
                     </div>
                     <div class="sala-info-item">
-                        <strong>Alunos:</strong> {{ sala.aluno_count }}
+                        <strong>Students:</strong> {{ sala.aluno_count }}
                     </div>
                     <div class="sala-info-item">
-                        <strong>Criada:</strong> {{ sala.data_criacao }}
+                        <strong>Created:</strong> {{ sala.data_criacao }}
                     </div>
                 </div>
                 
                 <div class="sala-actions">
                     <a href="{{ url_for('professor.professor_sala_detalhes', codigo_sala=sala.codigo) }}" class="action-btn info">
-                        👁️ Ver detalhes
+                        👁️ View details
                     </a>
                     <a href="{{ url_for('tela_selecao', codigo_sala=sala.codigo) }}" class="action-btn success">
-                        ✚ Criar desafio
+                        ✚ Create challenge
                     </a>
                     <form method="POST" action="{{ url_for('professor.professor_sala_fechar') }}" class="no-margin">
                         <input type="hidden" name="codigo_sala" value="{{ sala.codigo }}" />
                         <button type="submit" class="action-btn danger">
-                            🔒 Fechar sala
+                            🔒 Close room
                         </button>
                     </form>
                 </div>
                 
                 {% if sala.desafios and sala.desafios|length > 0 %}
                 <div class="desafios-container">
-                    <h5 class="desafios-title">Desafios da Sala</h5>
+                    <h5 class="desafios-title">Room Challenges</h5>
                     
                     {% for d in sala.desafios %}
                     <div class="desafio-item">
@@ -182,7 +182,7 @@
                     
                     {% if sala.desafio_selecionado_index is not none %}
                     <div class="desafio-selecionado">
-                        <strong>Desafio Selecionado:</strong>
+                        <strong>Selected Challenge:</strong>
                         <div class="mt-8">
                             {% set dsel = sala.desafios[sala.desafio_selecionado_index] %}
                             {% if dsel.descricao %}
@@ -200,8 +200,8 @@
         </div>
         {% else %}
         <div class="empty-state">      
-            <h2 class="empty-text">Nenhuma sala criada ainda</h2>
-            <p>Crie sua primeira sala virtual para começar a jornada espacial com seus alunos!</p>
+            <h2 class="empty-text">No rooms created yet</h2>
+            <p>Create your first virtual room to begin the space journey with your students!</p>
         </div>
         {% endif %}
         </section>
@@ -213,9 +213,9 @@
     <script>
         function copiarCodigo(codigo) {
             navigator.clipboard.writeText(codigo).then(() => {
-                alert('Código copiado: ' + codigo);
+                alert('Code copied: ' + codigo);
             }).catch(err => {
-                alert('Erro ao copiar código: ' + err);
+                alert('Error copying code: ' + err);
             });
         }
 
