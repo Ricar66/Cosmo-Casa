@@ -1064,8 +1064,8 @@ body.conteudo-centralizado.selecao-modulos {
 .alert-banner .msg { flex:1; }
 
 /* ===== Seleção de Módulos: painéis ===== */
-.info-performance { padding: 12px; background: rgba(100, 255, 218, 0.1); border-radius: 8px; border-left: 4px solid #64ffda; }
-.info-performance h4 { margin: 0 0 8px 0; color: #64ffda; }
+.info-performance { padding: 12px; background: rgba(100, 255, 218, 0.1); border-radius: 8px; border-left: 4px solid #fff; }
+.info-performance h4 { margin: 0 0 8px 0; color: #fff; }
 .info-performance p { margin: 5px 0; font-size: 0.9em; }
 #explicacao-duracao { margin: 2px 0; font-size: 0.8em; color: #888; }
 
