@@ -31,6 +31,18 @@
                 <div class="dashboard-header">
                     <h2>Professor Dashboard</h2>
                 </div>
+                
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert-banner {{ 'success' if category == 'success' else 'warning' if category == 'warning' else 'danger' if category == 'error' else '' }}">
+                                <div class="msg">{{ message }}</div>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
                 {% if must_change_admin %}
                 <div class="alert-banner">
                     <div class="msg">Your default password is still active. For security, please change it.</div>

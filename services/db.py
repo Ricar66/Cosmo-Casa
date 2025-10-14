@@ -189,9 +189,18 @@ class DatabaseManager:
             return None
     
     def adicionar_aluno(self, sala_id, nome, email=None):
-        """Adiciona um aluno à sala"""
+        """Adiciona um aluno à sala, verificando se o nome já existe"""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
+            
+            # Verificar se já existe um aluno com o mesmo nome na sala
+            cursor.execute('''
+                SELECT id FROM alunos WHERE sala_id = ? AND nome = ?
+            ''', (sala_id, nome))
+            
+            if cursor.fetchone():
+                raise ValueError(f"Já existe um aluno com o nome '{nome}' nesta sala")
+            
             cursor.execute('''
                 INSERT INTO alunos (sala_id, nome, email, progresso_json)
                 VALUES (?, ?, ?, ?)

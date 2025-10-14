@@ -17,7 +17,7 @@ import sqlite3
 import logging
 from datetime import datetime
 
-from flask import Blueprint, render_template, request, redirect, url_for, Response, session
+from flask import Blueprint, render_template, request, redirect, url_for, Response, session, flash
 import os
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -485,8 +485,24 @@ def criar_sala():
 
         # Inserir alunos
         if sala_id:
+            nomes_duplicados = []
+            nomes_adicionados = 0
             for nome in nomes:
-                db_manager.adicionar_aluno(sala_id, nome)
+                try:
+                    db_manager.adicionar_aluno(sala_id, nome)
+                    nomes_adicionados += 1
+                except ValueError as e:
+                    # Nome duplicado encontrado
+                    nomes_duplicados.append(nome)
+                    logging.warning(f"Nome duplicado ignorado: {nome}")
+            
+            # Feedback para o professor
+            if nomes_adicionados > 0:
+                flash(f"Sala criada com sucesso! {nomes_adicionados} alunos adicionados.", "success")
+            
+            if nomes_duplicados:
+                flash(f"Atenção: {len(nomes_duplicados)} nomes duplicados foram ignorados: {', '.join(nomes_duplicados[:5])}{'...' if len(nomes_duplicados) > 5 else ''}", "warning")
+                logging.info(f"Nomes duplicados ignorados na sala {codigo_sala}: {', '.join(nomes_duplicados)}")
 
         # Removida a sincronização com JSONStore: agora usamos apenas SQLite
         # Permanecer no dashboard após criação, sem redirecionar para detalhes
