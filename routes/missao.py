@@ -17,6 +17,7 @@ import logging
 import os
 import sqlite3
 from flask import Blueprint, render_template, request, redirect, url_for, session, send_from_directory, current_app
+from .aluno import verificar_autenticacao_aluno
 
 from services.db import db_manager
 from services.data import NAVES_ESPACIAIS, MODULOS_HABITAT, EVENTOS_ALEATORIOS
@@ -103,12 +104,10 @@ def montagem_transporte(destino):
 
 
 @missao_bp.route('/selecao-modulos/<string:destino>/<string:nave_id>')
+@verificar_autenticacao_aluno
 def selecao_modulos(destino, nave_id):
     """Tela de seleção de módulos para a missão."""
     try:
-        # Exigir sessão de aluno para acessar a seleção de módulos
-        if not session.get('aluno_id'):
-            return redirect(url_for('aluno.aluno_entrar'))
         # Validação: destino precisa ser válido
         destino_norm = (destino or '').lower()
         if destino_norm not in {'lua', 'marte', 'exoplaneta'}:
@@ -350,6 +349,7 @@ def viagem(destino, nave_id):
 
 
 @missao_bp.route('/habitat')
+@verificar_autenticacao_aluno
 def habitat():
     """Gate para a montagem do Habitat: somente após chegada bem-sucedida."""
     try:
@@ -405,6 +405,7 @@ def habitat():
 
 
 @missao_bp.route('/habitat/finalizar', methods=['POST'])
+@verificar_autenticacao_aluno
 def habitat_finalizar():
     """Finaliza o game pelo aluno e registra progresso/itens escolhidos."""
     try:
